@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Trash2 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
-type LineItem = {
+export type LineItem = {
   id: string
   description: string
   units: number

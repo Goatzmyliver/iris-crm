@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Plus, Save, Send } from "lucide-react"
 import DashboardLayout from "@/components/dashboard-layout"
 import Link from "next/link"
-import QuoteLineItems from "@/components/quote-line-items"
+import QuoteLineItems, { type LineItem } from "@/components/quote-line-items"
 import { formatCurrency } from "@/lib/utils"
 
 // Types for our form
@@ -28,16 +28,6 @@ type Customer = {
   address: string
 }
 
-// Updated LineItem type to match the component
-type LineItem = {
-  id: string
-  description: string
-  units: number
-  cost_price: number
-  markup: number
-  total: number
-}
-
 export default function NewQuotePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,7 +37,6 @@ export default function NewQuotePage() {
     notes: "",
     customer_notes: "",
   })
-  // Updated initial line item state
   const [lineItems, setLineItems] = useState<LineItem[]>([
     {
       id: uuidv4(),
@@ -64,6 +53,8 @@ export default function NewQuotePage() {
 
   // Calculate totals
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0)
+  const baseCost = lineItems.reduce((sum, item) => sum + item.cost_price * item.units, 0)
+  const totalMarkup = subtotal - baseCost
   const taxRate = 0.15 // 15% GST
   const taxAmount = subtotal * taxRate
   const total = subtotal + taxAmount
@@ -71,34 +62,11 @@ export default function NewQuotePage() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        // For testing, let's create a mock customer if none exist
         const { data, error } = await supabase.from("customers").select("id, name, email, phone, address")
 
         if (error) throw error
 
-        console.log("Fetched customers:", data)
-
-        if (data && data.length === 0) {
-          // No customers found, let's create a test one
-          console.log("No customers found, creating a test customer")
-          const { data: newCustomer, error: createError } = await supabase
-            .from("customers")
-            .insert({
-              name: "Test Customer",
-              email: "test@example.com",
-              phone: "123-456-7890",
-              address: "123 Test St",
-            })
-            .select()
-
-          if (createError) throw createError
-
-          if (newCustomer) {
-            setCustomers(newCustomer)
-          }
-        } else {
-          setCustomers(data || [])
-        }
+        setCustomers(data || [])
       } catch (err: any) {
         console.error("Error fetching customers:", err)
       }
@@ -113,7 +81,6 @@ export default function NewQuotePage() {
   }
 
   const handleCustomerChange = (value: string) => {
-    console.log("Selected customer ID:", value)
     setSelectedCustomerId(Number(value))
   }
 
@@ -152,8 +119,6 @@ export default function NewQuotePage() {
     try {
       // Generate a quote ID with a prefix and sequential number
       const quoteId = `Q-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`
-
-      console.log("Creating quote with ID:", quoteId, "for customer:", selectedCustomerId)
 
       // Insert the quote
       const { error: quoteError } = await supabase.from("quotes").insert({
@@ -294,6 +259,10 @@ export default function NewQuotePage() {
                     <div className="flex justify-between text-sm">
                       <span>Subtotal</span>
                       <span>{formatCurrency(subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Total Markup</span>
+                      <span className="text-green-600 font-medium">{formatCurrency(totalMarkup)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>GST (15%)</span>

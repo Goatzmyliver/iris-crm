@@ -10,36 +10,17 @@ import { Plus, Search, UserPlus } from "lucide-react"
 import DashboardLayout from "@/components/dashboard-layout"
 import Link from "next/link"
 
-// Mock customer data
-const MOCK_CUSTOMERS = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john@example.com",
-    phone: "021-555-1234",
-    address: "123 Main St, Auckland",
-    created_at: "2025-01-15",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    phone: "022-555-5678",
-    address: "456 High St, Wellington",
-    created_at: "2025-02-20",
-  },
-  {
-    id: 3,
-    name: "Michael Brown",
-    email: "michael@example.com",
-    phone: "027-555-9012",
-    address: "789 Park Ave, Christchurch",
-    created_at: "2025-03-10",
-  },
-]
+type Customer = {
+  id: number
+  name: string
+  email: string | null
+  phone: string
+  address: string | null
+  created_at: string
+}
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<any[]>([])
+  const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const supabase = createClientComponentClient()
@@ -47,9 +28,14 @@ export default function CustomersPage() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        // In a real app, you would fetch actual data from Supabase
-        // For now, we'll use mock data
-        setCustomers(MOCK_CUSTOMERS)
+        const { data, error } = await supabase
+          .from("customers")
+          .select("id, name, email, phone, address, created_at")
+          .order("created_at", { ascending: false })
+
+        if (error) throw error
+
+        setCustomers(data || [])
       } catch (error) {
         console.error("Error fetching customers:", error)
       } finally {
@@ -63,7 +49,7 @@ export default function CustomersPage() {
   const filteredCustomers = customers.filter(
     (customer) =>
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (customer.email && customer.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
       customer.phone.includes(searchQuery),
   )
 
@@ -117,10 +103,10 @@ export default function CustomersPage() {
                     {filteredCustomers.map((customer) => (
                       <TableRow key={customer.id}>
                         <TableCell className="font-medium">{customer.name}</TableCell>
-                        <TableCell>{customer.email}</TableCell>
+                        <TableCell>{customer.email || "-"}</TableCell>
                         <TableCell>{customer.phone}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{customer.address}</TableCell>
-                        <TableCell>{customer.created_at}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">{customer.address || "-"}</TableCell>
+                        <TableCell>{new Date(customer.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="sm" asChild>
                             <Link href={`/customers/${customer.id}`}>View</Link>

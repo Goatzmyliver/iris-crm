@@ -1,12 +1,10 @@
 "use client"
 
-import { CardFooter } from "@/components/ui/card"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -97,8 +95,6 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
   }
 
   const handleSendQuote = async () => {
-    // In a real app, this would send an email to the customer
-    // For now, we'll just update the status to "sent"
     try {
       const { error } = await supabase.from("quotes").update({ status: "sent" }).eq("id", params.id)
 
@@ -165,6 +161,8 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
 
   // Calculate totals
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0)
+  const baseCost = lineItems.reduce((sum, item) => sum + item.cost_price * item.quantity, 0)
+  const totalMarkup = subtotal - baseCost
   const taxRate = 0.15 // 15% GST
   const taxAmount = subtotal * taxRate
   const total = subtotal + taxAmount
@@ -265,7 +263,9 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                           <tr key={item.id} className="border-b">
                             <td className="py-3 px-1">{item.description}</td>
                             <td className="py-3 px-1 text-right">{item.quantity}</td>
-                            <td className="py-3 px-1 text-right">{formatCurrency(item.unit_price)}</td>
+                            <td className="py-3 px-1 text-right">
+                              {formatCurrency(item.unit_price || item.cost_price * (1 + item.markup / 100))}
+                            </td>
                             <td className="py-3 px-1 text-right">{formatCurrency(item.total)}</td>
                           </tr>
                         ))}
@@ -277,6 +277,10 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                     <div className="flex justify-between text-sm">
                       <span>Subtotal</span>
                       <span>{formatCurrency(subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Total Markup</span>
+                      <span className="text-green-600 font-medium">{formatCurrency(totalMarkup)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>GST (15%)</span>
@@ -342,10 +346,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                       </div>
                       <div>
                         <p className="text-sm font-medium">Quote Sent</p>
-                        <p className="text-xs text-muted-foreground">
-                          {/* In a real app, you'd store and display the actual sent date */}
-                          {new Date(quote.created_at).toLocaleString()}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{new Date(quote.created_at).toLocaleString()}</p>
                       </div>
                     </div>
                   )}
@@ -357,10 +358,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                       </div>
                       <div>
                         <p className="text-sm font-medium">Quote Approved</p>
-                        <p className="text-xs text-muted-foreground">
-                          {/* In a real app, you'd store and display the actual approval date */}
-                          {new Date(quote.created_at).toLocaleString()}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{new Date(quote.created_at).toLocaleString()}</p>
                       </div>
                     </div>
                   )}
@@ -372,10 +370,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
                       </div>
                       <div>
                         <p className="text-sm font-medium">Converted to Job</p>
-                        <p className="text-xs text-muted-foreground">
-                          {/* In a real app, you'd store and display the actual conversion date */}
-                          {new Date(quote.created_at).toLocaleString()}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{new Date(quote.created_at).toLocaleString()}</p>
                       </div>
                     </div>
                   )}

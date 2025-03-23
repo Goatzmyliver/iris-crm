@@ -15,8 +15,16 @@ import { ArrowLeft } from "lucide-react"
 import DashboardLayout from "@/components/dashboard-layout"
 import Link from "next/link"
 
+type CustomerFormData = {
+  name: string
+  email: string
+  phone: string
+  address: string
+  notes: string
+}
+
 export default function NewCustomerPage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CustomerFormData>({
     name: "",
     email: "",
     phone: "",
@@ -39,15 +47,15 @@ export default function NewCustomerPage() {
     setError(null)
 
     try {
-      // In a real app, you would insert data into Supabase
-      // const { error } = await supabase
-      //   .from('customers')
-      //   .insert([formData])
+      // Validate required fields
+      if (!formData.name || !formData.phone) {
+        throw new Error("Name and phone number are required")
+      }
 
-      // if (error) throw error
+      // Insert customer into Supabase
+      const { data, error } = await supabase.from("customers").insert([formData]).select()
 
-      // For now, we'll just simulate a successful insert
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (error) throw error
 
       router.push("/customers")
     } catch (err: any) {
@@ -83,7 +91,7 @@ export default function NewCustomerPage() {
                 </Alert>
               )}
               <div className="grid gap-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">Full Name *</Label>
                 <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
               </div>
               <div className="grid gap-2">
@@ -91,7 +99,7 @@ export default function NewCustomerPage() {
                 <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="phone">Phone Number</Label>
+                <Label htmlFor="phone">Phone Number *</Label>
                 <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} required />
               </div>
               <div className="grid gap-2">

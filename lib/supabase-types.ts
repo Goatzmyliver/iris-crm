@@ -64,6 +64,8 @@ export interface Database {
           quote_id: string
           description: string
           quantity: number
+          cost_price: number
+          markup: number
           unit_price: number
           total: number
         }
@@ -72,6 +74,8 @@ export interface Database {
           quote_id: string
           description: string
           quantity: number
+          cost_price: number
+          markup: number
           unit_price: number
           total: number
         }
@@ -80,6 +84,8 @@ export interface Database {
           quote_id?: string
           description?: string
           quantity?: number
+          cost_price?: number
+          markup?: number
           unit_price?: number
           total?: number
         }

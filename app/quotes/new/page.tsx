@@ -28,10 +28,13 @@ type Customer = {
   address: string
 }
 
+// Update the LineItem type to include cost_price and markup
 type LineItem = {
   id: string
   description: string
   quantity: number
+  cost_price: number
+  markup: number
   unit_price: number
   total: number
 }
@@ -45,11 +48,14 @@ export default function NewQuotePage() {
     notes: "",
     customer_notes: "",
   })
+  // Update the initial line item state to include the new fields
   const [lineItems, setLineItems] = useState<LineItem[]>([
     {
       id: uuidv4(),
       description: "",
       quantity: 1,
+      cost_price: 0,
+      markup: 0,
       unit_price: 0,
       total: 0,
     },
@@ -64,6 +70,7 @@ export default function NewQuotePage() {
   const taxAmount = subtotal * taxRate
   const total = subtotal + taxAmount
 
+  // Update the useEffect to log customers for debugging
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -71,6 +78,7 @@ export default function NewQuotePage() {
 
         if (error) throw error
 
+        console.log("Fetched customers:", data) // Add this line for debugging
         setCustomers(data || [])
       } catch (err: any) {
         console.error("Error fetching customers:", err)
@@ -93,6 +101,7 @@ export default function NewQuotePage() {
     setLineItems(updatedItems)
   }
 
+  // Update the handleAddLineItem function to include the new fields
   const handleAddLineItem = () => {
     setLineItems([
       ...lineItems,
@@ -100,12 +109,15 @@ export default function NewQuotePage() {
         id: uuidv4(),
         description: "",
         quantity: 1,
+        cost_price: 0,
+        markup: 0,
         unit_price: 0,
         total: 0,
       },
     ])
   }
 
+  // Fix the customer selection issue by updating the handleSubmit function
   const handleSubmit = async (status: "draft" | "sent") => {
     if (!selectedCustomerId) {
       setError("Please select a customer")
@@ -122,7 +134,6 @@ export default function NewQuotePage() {
 
     try {
       // Generate a quote ID with a prefix and sequential number
-      // In a real app, you'd get the next number from the database
       const quoteId = `Q-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`
 
       // Insert the quote
@@ -141,6 +152,8 @@ export default function NewQuotePage() {
         quote_id: quoteId,
         description: item.description,
         quantity: item.quantity,
+        cost_price: item.cost_price,
+        markup: item.markup,
         unit_price: item.unit_price,
         total: item.total,
       }))

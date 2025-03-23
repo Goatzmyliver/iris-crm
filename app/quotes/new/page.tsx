@@ -28,14 +28,13 @@ type Customer = {
   address: string
 }
 
-// Update the LineItem type to include cost_price and markup
+// Updated LineItem type to match the component
 type LineItem = {
   id: string
   description: string
-  quantity: number
+  units: number
   cost_price: number
   markup: number
-  unit_price: number
   total: number
 }
 
@@ -48,15 +47,14 @@ export default function NewQuotePage() {
     notes: "",
     customer_notes: "",
   })
-  // Update the initial line item state to include the new fields
+  // Updated initial line item state
   const [lineItems, setLineItems] = useState<LineItem[]>([
     {
       id: uuidv4(),
       description: "",
-      quantity: 1,
+      units: 1,
       cost_price: 0,
       markup: 0,
-      unit_price: 0,
       total: 0,
     },
   ])
@@ -70,16 +68,37 @@ export default function NewQuotePage() {
   const taxAmount = subtotal * taxRate
   const total = subtotal + taxAmount
 
-  // Update the useEffect to log customers for debugging
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
+        // For testing, let's create a mock customer if none exist
         const { data, error } = await supabase.from("customers").select("id, name, email, phone, address")
 
         if (error) throw error
 
-        console.log("Fetched customers:", data) // Add this line for debugging
-        setCustomers(data || [])
+        console.log("Fetched customers:", data)
+
+        if (data && data.length === 0) {
+          // No customers found, let's create a test one
+          console.log("No customers found, creating a test customer")
+          const { data: newCustomer, error: createError } = await supabase
+            .from("customers")
+            .insert({
+              name: "Test Customer",
+              email: "test@example.com",
+              phone: "123-456-7890",
+              address: "123 Test St",
+            })
+            .select()
+
+          if (createError) throw createError
+
+          if (newCustomer) {
+            setCustomers(newCustomer)
+          }
+        } else {
+          setCustomers(data || [])
+        }
       } catch (err: any) {
         console.error("Error fetching customers:", err)
       }
@@ -94,6 +113,7 @@ export default function NewQuotePage() {
   }
 
   const handleCustomerChange = (value: string) => {
+    console.log("Selected customer ID:", value)
     setSelectedCustomerId(Number(value))
   }
 
@@ -101,23 +121,20 @@ export default function NewQuotePage() {
     setLineItems(updatedItems)
   }
 
-  // Update the handleAddLineItem function to include the new fields
   const handleAddLineItem = () => {
     setLineItems([
       ...lineItems,
       {
         id: uuidv4(),
         description: "",
-        quantity: 1,
+        units: 1,
         cost_price: 0,
         markup: 0,
-        unit_price: 0,
         total: 0,
       },
     ])
   }
 
-  // Fix the customer selection issue by updating the handleSubmit function
   const handleSubmit = async (status: "draft" | "sent") => {
     if (!selectedCustomerId) {
       setError("Please select a customer")
@@ -136,6 +153,8 @@ export default function NewQuotePage() {
       // Generate a quote ID with a prefix and sequential number
       const quoteId = `Q-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`
 
+      console.log("Creating quote with ID:", quoteId, "for customer:", selectedCustomerId)
+
       // Insert the quote
       const { error: quoteError } = await supabase.from("quotes").insert({
         id: quoteId,
@@ -151,10 +170,9 @@ export default function NewQuotePage() {
       const lineItemsToInsert = lineItems.map((item) => ({
         quote_id: quoteId,
         description: item.description,
-        quantity: item.quantity,
+        quantity: item.units,
         cost_price: item.cost_price,
         markup: item.markup,
-        unit_price: item.unit_price,
         total: item.total,
       }))
 

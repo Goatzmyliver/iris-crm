@@ -66,7 +66,6 @@ export interface Database {
           quantity: number
           cost_price: number
           markup: number
-          unit_price: number
           total: number
         }
         Insert: {
@@ -76,7 +75,6 @@ export interface Database {
           quantity: number
           cost_price: number
           markup: number
-          unit_price: number
           total: number
         }
         Update: {
@@ -86,7 +84,6 @@ export interface Database {
           quantity?: number
           cost_price?: number
           markup?: number
-          unit_price?: number
           total?: number
         }
       }

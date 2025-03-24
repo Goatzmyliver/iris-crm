@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, Users, FileText, Calendar, Package, Settings, LogOut, Menu, X } from "lucide-react"
@@ -18,6 +18,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [loading, setLoading] = useState(true)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const supabase = createClientComponentClient()
 
   useEffect(() => {
@@ -25,16 +26,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       const {
         data: { user },
       } = await supabase.auth.getUser()
+
+      if (!user) {
+        // Redirect to login if no user is found
+        router.push("/login")
+        return
+      }
+
       setUser(user)
       setLoading(false)
     }
 
     getUser()
-  }, [supabase])
+  }, [supabase, router])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
-    window.location.href = "/"
+    router.push("/login")
   }
 
   const navItems = [
@@ -51,17 +59,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Not Authorized</h1>
-          <p className="mb-4">You need to be logged in to access this page.</p>
-          <Button asChild>
-            <Link href="/login">Go to Login</Link>
-          </Button>
-        </div>
-      </div>
-    )
+    return null // We'll redirect in the useEffect
   }
 
   return (

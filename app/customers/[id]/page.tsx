@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Edit, Trash2, User, Phone, Mail, MapPin, FileText } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, User, Phone, Mail, MapPin, FileText, Users } from "lucide-react"
 import DashboardLayout from "@/components/dashboard-layout"
 import Link from "next/link"
 
@@ -19,6 +19,7 @@ type Customer = {
   address: string | null
   notes: string | null
   created_at: string
+  assigned_user_id: string | null
 }
 
 export default function CustomerDetailPage({ params }: { params: { id: string } }) {
@@ -28,6 +29,7 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const [assignedUser, setAssignedUser] = useState<any>(null)
 
   useEffect(() => {
     const fetchCustomerData = async () => {
@@ -42,6 +44,19 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
         if (customerError) throw customerError
 
         setCustomer(customerData)
+
+        // If customer has an assigned user, fetch the user details
+        if (customerData.assigned_user_id) {
+          const { data: userData, error: userError } = await supabase
+            .from("users")
+            .select("id, name, email")
+            .eq("id", customerData.assigned_user_id)
+            .single()
+
+          if (!userError) {
+            setAssignedUser(userData)
+          }
+        }
 
         // Fetch quotes
         const { data: quotesData, error: quotesError } = await supabase
@@ -179,6 +194,16 @@ export default function CustomerDetailPage({ params }: { params: { id: string } 
                     </div>
                   </div>
                 </>
+              )}
+
+              {assignedUser && (
+                <div className="flex items-start gap-3">
+                  <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="font-medium">{assignedUser.name}</p>
+                    <p className="text-sm text-muted-foreground">Assigned To</p>
+                  </div>
+                </div>
               )}
             </CardContent>
             <CardFooter>

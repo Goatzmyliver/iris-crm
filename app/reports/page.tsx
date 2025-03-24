@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Download, BarChart3, TrendingUp, DollarSign, Users, FileText } from "lucide-react"
+import { Download, BarChart3, TrendingUp, DollarSign, Users, FileText, Calendar } from "lucide-react"
 import DashboardLayout from "@/components/dashboard-layout"
 import { formatCurrency } from "@/lib/utils"
 import { SalesOverviewChart } from "@/components/reports/sales-overview-chart"
@@ -14,10 +14,22 @@ import { QuoteConversionChart } from "@/components/reports/quote-conversion-char
 import { CustomerGrowthChart } from "@/components/reports/customer-growth-chart"
 import { JobStatusChart } from "@/components/reports/job-status-chart"
 import { RevenueByMonthChart } from "@/components/reports/revenue-by-month-chart"
+import { DateRangePicker } from "@/components/date-range-picker"
+import { subDays, subYears, startOfYear, startOfQuarter, endOfQuarter, format } from "date-fns"
 
 export default function ReportsPage() {
+  // Update the state to include more date range options
   const [timeRange, setTimeRange] = useState("last30days")
+  const [userFilter, setUserFilter] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
+  const [users, setUsers] = useState<any[]>([])
+  const [dateRange, setDateRange] = useState<{
+    from: Date
+    to: Date
+  }>({
+    from: subDays(new Date(), 30),
+    to: new Date(),
+  })
   const [metrics, setMetrics] = useState({
     totalRevenue: 0,
     totalQuotes: 0,
@@ -30,18 +42,109 @@ export default function ReportsPage() {
   })
   const supabase = createClientComponentClient()
 
+  // Handle time range changes
+  const handleTimeRangeChange = (value: string) => {
+    setTimeRange(value)
+
+    const today = new Date()
+    let from = today
+    let to = today
+
+    switch (value) {
+      case "thisWeek":
+        from = subDays(today, today.getDay())
+        break
+      case "thisMonth":
+        from = new Date(today.getFullYear(), today.getMonth(), 1)
+        break
+      case "thisQuarter":
+        from = startOfQuarter(today)
+        to = endOfQuarter(today)
+        break
+      case "thisYear":
+        from = startOfYear(today)
+        break
+      case "last7days":
+        from = subDays(today, 7)
+        break
+      case "last30days":
+        from = subDays(today, 30)
+        break
+      case "last90days":
+        from = subDays(today, 90)
+        break
+      case "lastYear":
+        from = subYears(today, 1)
+        break
+      case "allTime":
+        from = new Date(2020, 0, 1) // Set a reasonable "all time" start date
+        break
+      case "custom":
+        // Don't change the date range for custom
+        return
+    }
+
+    setDateRange({ from, to })
+  }
+
+  // Add this to the useEffect to fetch users
   useEffect(() => {
     const fetchReportData = async () => {
       setIsLoading(true)
       try {
+        // Fetch users
+        const { data: usersData } = await supabase.from("users").select("id, name, email")
+
+        setUsers(usersData || [])
+
         // In a real implementation, you would fetch actual data from Supabase
         // For now, we'll use mock data
 
         // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
-        // Set mock metrics based on the selected time range
+        // Set mock metrics based on the selected time range and user filter
         const mockData = {
+          thisWeek: {
+            totalRevenue: 2150,
+            totalQuotes: 4,
+            conversionRate: 45,
+            averageQuoteValue: 1950,
+            newCustomers: 2,
+            completedJobs: 2,
+            pendingJobs: 3,
+            profitMargin: 30,
+          },
+          thisMonth: {
+            totalRevenue: 8750,
+            totalQuotes: 12,
+            conversionRate: 55,
+            averageQuoteValue: 2100,
+            newCustomers: 6,
+            completedJobs: 8,
+            pendingJobs: 5,
+            profitMargin: 33,
+          },
+          thisQuarter: {
+            totalRevenue: 28500,
+            totalQuotes: 35,
+            conversionRate: 60,
+            averageQuoteValue: 2250,
+            newCustomers: 15,
+            completedJobs: 22,
+            pendingJobs: 8,
+            profitMargin: 35,
+          },
+          thisYear: {
+            totalRevenue: 95000,
+            totalQuotes: 120,
+            conversionRate: 65,
+            averageQuoteValue: 2400,
+            newCustomers: 45,
+            completedJobs: 75,
+            pendingJobs: 15,
+            profitMargin: 38,
+          },
           last7days: {
             totalRevenue: 4250,
             totalQuotes: 8,
@@ -72,7 +175,7 @@ export default function ReportsPage() {
             pendingJobs: 15,
             profitMargin: 38,
           },
-          thisYear: {
+          lastYear: {
             totalRevenue: 124500,
             totalQuotes: 180,
             conversionRate: 70,
@@ -82,9 +185,43 @@ export default function ReportsPage() {
             pendingJobs: 25,
             profitMargin: 40,
           },
+          allTime: {
+            totalRevenue: 245000,
+            totalQuotes: 320,
+            conversionRate: 72,
+            averageQuoteValue: 2800,
+            newCustomers: 120,
+            completedJobs: 230,
+            pendingJobs: 30,
+            profitMargin: 42,
+          },
+          custom: {
+            totalRevenue: 35000,
+            totalQuotes: 45,
+            conversionRate: 62,
+            averageQuoteValue: 2400,
+            newCustomers: 18,
+            completedJobs: 28,
+            pendingJobs: 12,
+            profitMargin: 36,
+          },
         }
 
-        setMetrics(mockData[timeRange as keyof typeof mockData])
+        // Adjust metrics based on user filter (in a real implementation, this would be a database query)
+        let filteredMetrics = mockData[timeRange as keyof typeof mockData]
+        if (userFilter !== "all") {
+          // Simulate filtered data - reduce values by a percentage
+          filteredMetrics = {
+            ...filteredMetrics,
+            totalRevenue: Math.round(filteredMetrics.totalRevenue * 0.4),
+            totalQuotes: Math.round(filteredMetrics.totalQuotes * 0.4),
+            newCustomers: Math.round(filteredMetrics.newCustomers * 0.4),
+            completedJobs: Math.round(filteredMetrics.completedJobs * 0.4),
+            pendingJobs: Math.round(filteredMetrics.pendingJobs * 0.4),
+          }
+        }
+
+        setMetrics(filteredMetrics)
       } catch (error) {
         console.error("Error fetching report data:", error)
       } finally {
@@ -93,12 +230,15 @@ export default function ReportsPage() {
     }
 
     fetchReportData()
-  }, [timeRange, supabase])
+  }, [timeRange, userFilter, dateRange, supabase])
 
   const handleExportReport = () => {
     // In a real implementation, this would generate and download a PDF or CSV report
     alert("This would download a report in a real implementation")
   }
+
+  // Format date range for display
+  const formattedDateRange = `${format(dateRange.from, "MMM d, yyyy")} - ${format(dateRange.to, "MMM d, yyyy")}`
 
   return (
     <DashboardLayout>
@@ -109,16 +249,41 @@ export default function ReportsPage() {
             <p className="text-muted-foreground">Track your business performance and growth</p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select time range" />
+          {/* Update the filter section in the JSX to include more date range options */}
+          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+            <div className="flex flex-col gap-1 w-full sm:w-auto">
+              <Select value={timeRange} onValueChange={handleTimeRangeChange}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="thisWeek">This Week</SelectItem>
+                  <SelectItem value="thisMonth">This Month</SelectItem>
+                  <SelectItem value="thisQuarter">This Quarter</SelectItem>
+                  <SelectItem value="thisYear">This Year</SelectItem>
+                  <SelectItem value="last7days">Last 7 Days</SelectItem>
+                  <SelectItem value="last30days">Last 30 Days</SelectItem>
+                  <SelectItem value="last90days">Last 90 Days</SelectItem>
+                  <SelectItem value="lastYear">Last Year</SelectItem>
+                  <SelectItem value="allTime">All Time</SelectItem>
+                  <SelectItem value="custom">Custom Range</SelectItem>
+                </SelectContent>
+              </Select>
+              {timeRange === "custom" && <DateRangePicker dateRange={dateRange} onUpdate={setDateRange} />}
+            </div>
+
+            <Select value={userFilter} onValueChange={setUserFilter}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Select user" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="last7days">Last 7 Days</SelectItem>
-                <SelectItem value="last30days">Last 30 Days</SelectItem>
-                <SelectItem value="last90days">Last 90 Days</SelectItem>
-                <SelectItem value="thisYear">This Year</SelectItem>
+                <SelectItem value="all">All Users</SelectItem>
+                <SelectItem value="current">My Data Only</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -126,6 +291,14 @@ export default function ReportsPage() {
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
+          </div>
+        </div>
+
+        {/* Display the current date range */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-muted-foreground" />
+            <span className="text-muted-foreground font-medium">{formattedDateRange}</span>
           </div>
         </div>
 
@@ -204,7 +377,7 @@ export default function ReportsPage() {
                   <CardDescription>Quote volume and conversion rates</CardDescription>
                 </CardHeader>
                 <CardContent className="h-80">
-                  <SalesOverviewChart timeRange={timeRange} />
+                  <SalesOverviewChart timeRange={timeRange} userFilter={userFilter} dateRange={dateRange} />
                 </CardContent>
               </Card>
 
@@ -214,7 +387,7 @@ export default function ReportsPage() {
                   <CardDescription>Monthly revenue over time</CardDescription>
                 </CardHeader>
                 <CardContent className="h-80">
-                  <RevenueByMonthChart timeRange={timeRange} />
+                  <RevenueByMonthChart timeRange={timeRange} userFilter={userFilter} dateRange={dateRange} />
                 </CardContent>
               </Card>
             </div>
@@ -236,7 +409,7 @@ export default function ReportsPage() {
                   <CardDescription>New customers over time</CardDescription>
                 </CardHeader>
                 <CardContent className="h-80">
-                  <CustomerGrowthChart timeRange={timeRange} />
+                  <CustomerGrowthChart timeRange={timeRange} userFilter={userFilter} dateRange={dateRange} />
                 </CardContent>
               </Card>
 

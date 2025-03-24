@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft } from "lucide-react"
 import DashboardLayout from "@/components/dashboard-layout"
 import Link from "next/link"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type CustomerFormData = {
   name: string
@@ -21,20 +22,39 @@ type CustomerFormData = {
   phone: string
   address: string
   notes: string
+  assigned_user_id: string
 }
 
 export default function NewCustomerPage() {
+  const [users, setUsers] = useState<any[]>([])
   const [formData, setFormData] = useState<CustomerFormData>({
     name: "",
     email: "",
     phone: "",
     address: "",
     notes: "",
+    assigned_user_id: "",
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClientComponentClient()
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase.from("users").select("id, name, email")
+
+        if (error) throw error
+
+        setUsers(data || [])
+      } catch (err) {
+        console.error("Error fetching users:", err)
+      }
+    }
+
+    fetchUsers()
+  }, [supabase])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -105,6 +125,25 @@ export default function NewCustomerPage() {
               <div className="grid gap-2">
                 <Label htmlFor="address">Address</Label>
                 <Textarea id="address" name="address" value={formData.address} onChange={handleChange} rows={2} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="assigned_user">Assign To</Label>
+                <Select
+                  value={formData.assigned_user_id}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, assigned_user_id: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="notes">Notes</Label>

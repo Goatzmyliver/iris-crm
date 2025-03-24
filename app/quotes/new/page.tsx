@@ -33,9 +33,11 @@ export default function NewQuotePage() {
   const [error, setError] = useState<string | null>(null)
   const [customers, setCustomers] = useState<Customer[]>([])
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null)
+  const [users, setUsers] = useState<any[]>([])
   const [quoteData, setQuoteData] = useState({
     notes: "",
     customer_notes: "",
+    assigned_user_id: "",
   })
   const [lineItems, setLineItems] = useState<LineItem[]>([
     {
@@ -60,19 +62,29 @@ export default function NewQuotePage() {
   const total = subtotal + taxAmount
 
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchData = async () => {
       try {
-        const { data, error } = await supabase.from("customers").select("id, name, email, phone, address")
+        // Fetch customers
+        const { data: customersData, error: customersError } = await supabase
+          .from("customers")
+          .select("id, name, email, phone, address")
 
-        if (error) throw error
+        if (customersError) throw customersError
 
-        setCustomers(data || [])
-      } catch (err: any) {
-        console.error("Error fetching customers:", err)
+        setCustomers(customersData || [])
+
+        // Fetch users
+        const { data: usersData, error: usersError } = await supabase.from("users").select("id, name, email")
+
+        if (usersError) throw usersError
+
+        setUsers(usersData || [])
+      } catch (err) {
+        console.error("Error fetching data:", err)
       }
     }
 
-    fetchCustomers()
+    fetchData()
   }, [supabase])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -120,6 +132,15 @@ export default function NewQuotePage() {
       // Generate a quote ID with a prefix and sequential number
       const quoteId = `Q-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`
 
+      // Get the current user if no assignment is made
+      let assignedUserId = quoteData.assigned_user_id
+      if (!assignedUserId) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        assignedUserId = user?.id || null
+      }
+
       // Insert the quote
       const { error: quoteError } = await supabase.from("quotes").insert({
         id: quoteId,
@@ -127,6 +148,7 @@ export default function NewQuotePage() {
         status: status,
         total: total,
         notes: quoteData.notes,
+        assigned_user_id: assignedUserId,
       })
 
       if (quoteError) throw quoteError
@@ -206,6 +228,26 @@ export default function NewQuotePage() {
                         + Add a new customer
                       </Link>
                     </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="assigned_user">Assign To</Label>
+                    <Select
+                      value={quoteData.assigned_user_id}
+                      onValueChange={(value) => setQuoteData((prev) => ({ ...prev, assigned_user_id: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        {users.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="grid gap-2">

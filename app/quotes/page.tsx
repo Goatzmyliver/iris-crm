@@ -20,6 +20,7 @@ const MOCK_QUOTES = [
     total: 1250.0,
     status: "draft",
     created_at: "2025-03-15",
+    assigned_user: "Sarah Wilson",
   },
   {
     id: "Q-2025-002",
@@ -27,6 +28,7 @@ const MOCK_QUOTES = [
     total: 3450.75,
     status: "sent",
     created_at: "2025-03-10",
+    assigned_user: "Mike Thompson",
   },
   {
     id: "Q-2025-003",
@@ -34,6 +36,7 @@ const MOCK_QUOTES = [
     total: 2340.5,
     status: "approved",
     created_at: "2025-03-05",
+    assigned_user: "Sarah Wilson",
   },
   {
     id: "Q-2025-004",
@@ -41,6 +44,7 @@ const MOCK_QUOTES = [
     total: 1875.25,
     status: "converted",
     created_at: "2025-02-28",
+    assigned_user: null,
   },
   {
     id: "Q-2025-005",
@@ -48,6 +52,7 @@ const MOCK_QUOTES = [
     total: 4250.0,
     status: "sent",
     created_at: "2025-02-20",
+    assigned_user: "Mike Thompson",
   },
 ]
 
@@ -154,6 +159,7 @@ export default function QuotesPage() {
                       <TableHead>Total</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
+                      <TableHead>Assigned To</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -165,6 +171,7 @@ export default function QuotesPage() {
                         <TableCell>${quote.total.toFixed(2)}</TableCell>
                         <TableCell>{getStatusBadge(quote.status)}</TableCell>
                         <TableCell>{quote.created_at}</TableCell>
+                        <TableCell>{quote.assigned_user || "Unassigned"}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="sm" asChild>
                             <Link href={`/quotes/${quote.id}`}>View</Link>

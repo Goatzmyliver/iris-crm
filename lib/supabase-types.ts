@@ -12,6 +12,7 @@ export interface Database {
           phone: string
           address: string | null
           notes: string | null
+          assigned_user_id: string | null
         }
         Insert: {
           id?: number
@@ -21,6 +22,7 @@ export interface Database {
           phone: string
           address?: string | null
           notes?: string | null
+          assigned_user_id?: string | null
         }
         Update: {
           id?: number
@@ -30,6 +32,7 @@ export interface Database {
           phone?: string
           address?: string | null
           notes?: string | null
+          assigned_user_id?: string | null
         }
       }
       quotes: {
@@ -40,6 +43,7 @@ export interface Database {
           status: string
           total: number
           notes: string | null
+          assigned_user_id: string | null
         }
         Insert: {
           id?: string
@@ -48,6 +52,7 @@ export interface Database {
           status?: string
           total: number
           notes?: string | null
+          assigned_user_id?: string | null
         }
         Update: {
           id?: string
@@ -56,6 +61,7 @@ export interface Database {
           status?: string
           total?: number
           notes?: string | null
+          assigned_user_id?: string | null
         }
       }
       quote_items: {
@@ -97,6 +103,7 @@ export interface Database {
           scheduled_date: string | null
           completed_date: string | null
           notes: string | null
+          assigned_user_id: string | null
         }
         Insert: {
           id?: string
@@ -107,6 +114,7 @@ export interface Database {
           scheduled_date?: string | null
           completed_date?: string | null
           notes?: string | null
+          assigned_user_id?: string | null
         }
         Update: {
           id?: string
@@ -117,6 +125,7 @@ export interface Database {
           scheduled_date?: string | null
           completed_date?: string | null
           notes?: string | null
+          assigned_user_id?: string | null
         }
       }
       inventory_items: {

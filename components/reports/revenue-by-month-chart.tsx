@@ -2,66 +2,96 @@
 
 import { useEffect, useState } from "react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import type { DateRange } from "react-day-picker"
+import {
+  format,
+  eachDayOfInterval,
+  eachWeekOfInterval,
+  eachMonthOfInterval,
+  eachQuarterOfInterval,
+  differenceInDays,
+} from "date-fns"
 
 interface RevenueByMonthChartProps {
   timeRange: string
+  userFilter?: string
+  dateRange?: DateRange
 }
 
-export function RevenueByMonthChart({ timeRange }: RevenueByMonthChartProps) {
+export function RevenueByMonthChart({ timeRange, userFilter = "all", dateRange }: RevenueByMonthChartProps) {
   const [data, setData] = useState<any[]>([])
 
   useEffect(() => {
     // In a real implementation, you would fetch this data from your API
     // For now, we'll use mock data based on the selected time range
 
-    const mockData = {
-      last7days: [
-        { name: "Mon", revenue: 850 },
-        { name: "Tue", revenue: 0 },
-        { name: "Wed", revenue: 1200 },
-        { name: "Thu", revenue: 0 },
-        { name: "Fri", revenue: 1500 },
-        { name: "Sat", revenue: 700 },
-        { name: "Sun", revenue: 0 },
-      ],
-      last30days: [
-        { name: "Week 1", revenue: 3500 },
-        { name: "Week 2", revenue: 4200 },
-        { name: "Week 3", revenue: 5800 },
-        { name: "Week 4", revenue: 5250 },
-      ],
-      last90days: [
-        { name: "Jan", revenue: 12500 },
-        { name: "Feb", revenue: 16800 },
-        { name: "Mar", revenue: 23200 },
-      ],
-      thisYear: [
-        { name: "Jan", revenue: 12500 },
-        { name: "Feb", revenue: 16800 },
-        { name: "Mar", revenue: 23200 },
-        { name: "Apr", revenue: 18900 },
-        { name: "May", revenue: 21500 },
-        { name: "Jun", revenue: 19800 },
-        { name: "Jul", revenue: 22300 },
-        { name: "Aug", revenue: 25600 },
-        { name: "Sep", revenue: 24100 },
-        { name: "Oct", revenue: 27800 },
-        { name: "Nov", revenue: 29500 },
-        { name: "Dec", revenue: 32000 },
-      ],
+    // Generate data based on the date range
+    if (!dateRange?.from || !dateRange?.to) return
+
+    const { from, to } = dateRange
+    const daysDifference = differenceInDays(to, from)
+
+    let chartData: any[] = []
+    let mockData: any[] = []
+
+    // Determine the appropriate interval based on the date range
+    if (daysDifference <= 31) {
+      // For shorter ranges, show daily data
+      mockData = eachDayOfInterval({ start: from, end: to }).map((date) => ({
+        date,
+        revenue: Math.floor(Math.random() * 1500) + 500,
+      }))
+
+      chartData = mockData.map((item) => ({
+        name: format(item.date, "MMM d"),
+        revenue: item.revenue,
+      }))
+    } else if (daysDifference <= 90) {
+      // For medium ranges, show weekly data
+      mockData = eachWeekOfInterval({ start: from, end: to }, { weekStartsOn: 1 }).map((weekStart) => ({
+        date: weekStart,
+        revenue: Math.floor(Math.random() * 5000) + 2000,
+      }))
+
+      chartData = mockData.map((item) => ({
+        name: `${format(item.date, "MMM d")}`,
+        revenue: item.revenue,
+      }))
+    } else if (daysDifference <= 365) {
+      // For longer ranges, show monthly data
+      mockData = eachMonthOfInterval({ start: from, end: to }).map((monthStart) => ({
+        date: monthStart,
+        revenue: Math.floor(Math.random() * 20000) + 10000,
+      }))
+
+      chartData = mockData.map((item) => ({
+        name: format(item.date, "MMM yyyy"),
+        revenue: item.revenue,
+      }))
+    } else {
+      // For very long ranges, show quarterly data
+      mockData = eachQuarterOfInterval({ start: from, end: to }).map((quarterStart) => ({
+        date: quarterStart,
+        revenue: Math.floor(Math.random() * 50000) + 25000,
+      }))
+
+      chartData = mockData.map((item) => ({
+        name: `Q${Math.floor(item.date.getMonth() / 3) + 1} ${item.date.getFullYear()}`,
+        revenue: item.revenue,
+      }))
     }
 
-    // Use the appropriate data based on the time range
-    // For thisYear, we might want to show only the relevant months
-    if (timeRange === "thisYear") {
-      // Get current month index (0-based)
-      const currentMonth = new Date().getMonth()
-      // Only show data up to the current month
-      setData(mockData.thisYear.slice(0, currentMonth + 1))
-    } else {
-      setData(mockData[timeRange as keyof typeof mockData])
+    // Apply user filter if needed
+    if (userFilter !== "all") {
+      // Simulate filtered data - reduce values by a percentage
+      chartData = chartData.map((item: any) => ({
+        ...item,
+        revenue: Math.round(item.revenue * 0.4),
+      }))
     }
-  }, [timeRange])
+
+    setData(chartData)
+  }, [timeRange, userFilter, dateRange])
 
   return (
     <ResponsiveContainer width="100%" height="100%">

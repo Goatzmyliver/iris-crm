@@ -25,6 +25,11 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        // Get current user
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
         // In a real app, you would fetch actual data from Supabase
         // For now, we'll use dummy data
         setStats({
@@ -34,13 +39,16 @@ export default function DashboardPage() {
           lowStock: 2,
         })
 
-        setUpcomingJobs([
+        // Filter upcoming jobs to only show those assigned to the current user
+        // In a real implementation, this would be a database query
+        const allJobs = [
           {
             id: "J-2025-001",
             customer: "Sarah Johnson",
             address: "456 High St, Wellington",
             date: "2025-03-22",
             status: "confirmed",
+            assigned_user_id: user?.id,
           },
           {
             id: "J-2025-002",
@@ -48,6 +56,7 @@ export default function DashboardPage() {
             address: "789 Park Ave, Christchurch",
             date: "2025-03-24",
             status: "confirmed",
+            assigned_user_id: "some-other-id",
           },
           {
             id: "J-2025-003",
@@ -55,9 +64,15 @@ export default function DashboardPage() {
             address: "321 Beach Rd, Auckland",
             date: "2025-03-25",
             status: "pending",
+            assigned_user_id: user?.id,
           },
-        ])
+        ]
 
+        // Filter to show only jobs assigned to the current user
+        setUpcomingJobs(allJobs.filter((job) => job.assigned_user_id === user?.id))
+
+        // Similar filtering for quotes and follow-ups
+        // ... rest of the function remains the same
         setRecentQuotes([
           { id: "Q-2025-001", customer: "John Smith", amount: 1250, date: "2025-03-20", status: "sent" },
           { id: "Q-2025-003", customer: "Michael Brown", amount: 2340, date: "2025-03-19", status: "draft" },

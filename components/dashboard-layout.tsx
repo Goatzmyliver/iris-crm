@@ -7,7 +7,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, FileText, Calendar, Package, Settings, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, Users, FileText, Calendar, Package, Settings, LogOut, Menu, X, BarChart } from "lucide-react"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -51,6 +51,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: "/quotes", label: "Quotes", icon: FileText },
     { href: "/jobs", label: "Scheduling", icon: Calendar },
     { href: "/inventory", label: "Inventory", icon: Package },
+    { href: "/reports", label: "Reports", icon: BarChart },
     { href: "/settings", label: "Settings", icon: Settings },
   ]
 

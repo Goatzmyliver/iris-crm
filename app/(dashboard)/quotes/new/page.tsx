@@ -394,11 +394,11 @@ export default function NewQuotePage() {
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2 px-2 w-[40%]">Description</th>
+                      <th className="text-left py-2 px-2">Description</th>
                       <th className="text-right py-2 px-2 w-[12%]">Quantity</th>
                       <th className="text-right py-2 px-2 w-[12%]">Cost</th>
                       <th className="text-right py-2 px-2 w-[12%]">Price</th>
-                      <th className="text-right py-2 px-2 w-[16%]">Total</th>
+                      <th className="text-right py-2 px-2 w-[12%]">Total</th>
                       <th className="text-right py-2 px-2 w-[8%]">Actions</th>
                     </tr>
                   </thead>
@@ -406,30 +406,32 @@ export default function NewQuotePage() {
                     {formData.items.map((item, index) => (
                       <tr key={index} className="border-b">
                         <td className="py-2 px-2">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex gap-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex border rounded-md overflow-hidden">
                               <button
                                 type="button"
-                                className={`px-2 py-1 text-xs rounded-l-md ${item.type === "product" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                                className={`px-3 py-1 text-xs ${item.type === "product" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                                 onClick={() => toggleItemType(index, "product")}
                               >
                                 Product
                               </button>
                               <button
                                 type="button"
-                                className={`px-2 py-1 text-xs rounded-r-md ${item.type === "custom" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                                className={`px-3 py-1 text-xs ${item.type === "custom" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                                 onClick={() => toggleItemType(index, "custom")}
                               >
                                 Custom
                               </button>
                             </div>
+                          </div>
 
-                            {item.type === "product" ? (
+                          {item.type === "product" ? (
+                            <div className="mb-2">
                               <Select
                                 value={item.product_id}
                                 onValueChange={(value) => handleItemChange(index, "product_id", value)}
                               >
-                                <SelectTrigger className="h-8 text-sm">
+                                <SelectTrigger className="h-9">
                                   <SelectValue placeholder="Select product" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -440,58 +442,58 @@ export default function NewQuotePage() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                            ) : null}
+                            </div>
+                          ) : null}
 
-                            <Input
-                              value={item.description}
-                              onChange={(e) => handleItemChange(index, "description", e.target.value)}
-                              className="h-8 text-sm"
-                              placeholder="Description"
-                              required
-                            />
-                          </div>
+                          <Input
+                            value={item.description}
+                            onChange={(e) => handleItemChange(index, "description", e.target.value)}
+                            className="h-9"
+                            placeholder="Description"
+                            required
+                          />
                         </td>
-                        <td className="py-2 px-2">
+                        <td className="py-2 px-2 align-bottom">
                           <Input
                             type="number"
                             min="1"
                             value={item.quantity}
                             onChange={(e) => handleItemChange(index, "quantity", Number.parseInt(e.target.value))}
-                            className="h-8 text-sm text-right"
+                            className="h-9 text-right"
                             required
                           />
                         </td>
-                        <td className="py-2 px-2">
+                        <td className="py-2 px-2 align-bottom">
                           <Input
                             type="number"
                             step="0.01"
                             min="0"
                             value={item.cost_price}
                             onChange={(e) => handleItemChange(index, "cost_price", Number.parseFloat(e.target.value))}
-                            className="h-8 text-sm text-right"
+                            className="h-9 text-right"
                             required
                           />
                         </td>
-                        <td className="py-2 px-2">
+                        <td className="py-2 px-2 align-bottom">
                           <Input
                             type="number"
                             step="0.01"
                             min="0"
                             value={item.unit_price}
                             onChange={(e) => handleItemChange(index, "unit_price", Number.parseFloat(e.target.value))}
-                            className="h-8 text-sm text-right"
+                            className="h-9 text-right"
                             required
                           />
                         </td>
-                        <td className="py-2 px-2 text-right font-medium">
+                        <td className="py-2 px-2 text-right align-bottom font-medium">
                           ${(item.quantity * item.unit_price).toFixed(2)}
                         </td>
-                        <td className="py-2 px-2 text-right">
+                        <td className="py-2 px-2 text-right align-bottom">
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8"
+                            className="h-9 w-9"
                             onClick={() => removeItem(index)}
                             disabled={formData.items.length === 1}
                           >
@@ -519,10 +521,6 @@ export default function NewQuotePage() {
                     <div className="flex justify-between text-sm">
                       <span>Cost:</span>
                       <span className="font-medium">${calculateCostTotal().toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Total Markup:</span>
-                      <span className="font-medium">${calculateTotalMarkup().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Profit:</span>

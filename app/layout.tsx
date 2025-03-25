@@ -1,35 +1,20 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
+import type { ReactNode } from "react"
+import { Sidebar } from "@/components/sidebar"
+import { Header } from "@/components/header"
 
-const inter = Inter({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "Iris CRM",
-  description: "Customer Relationship Management System",
-    generator: 'v0.dev'
-}
-
-export default function RootLayout({
+export default function DashboardLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: ReactNode
+}) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
-          <Toaster />
-        </ThemeProvider>
-      </body>
-    </html>
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <div className="flex flex-1">
+        <Sidebar className="hidden md:block" />
+        <main className="flex-1 p-4 md:p-6">{children}</main>
+      </div>
+    </div>
   )
 }
 
-
-
-import './globals.css'

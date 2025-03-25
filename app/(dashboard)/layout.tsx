@@ -1,15 +1,15 @@
-import type React from "react"
+import type { ReactNode } from "react"
 import { Sidebar } from "@/components/sidebar"
-import { MobileNav } from "@/components/mobile-nav"
+import { Header } from "@/components/header"
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <MobileNav />
+      <Header />
       <div className="flex flex-1">
         <Sidebar className="hidden md:block" />
         <main className="flex-1 p-4 md:p-6">{children}</main>

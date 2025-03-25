@@ -1,38 +1,23 @@
-import type { Metadata } from "next"
-import { notFound } from "next/navigation"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { EnquiryDetail } from "@/components/enquiry-detail"
 
-import { DashboardHeader } from "@/components/dashboard-header"
-import { DashboardShell } from "@/components/dashboard-shell"
-import { EnquiryDetails } from "@/components/enquiry-details"
-
-export const metadata: Metadata = {
+export const metadata = {
   title: "Enquiry Details | Iris CRM",
-  description: "View and manage enquiry details",
 }
 
-interface EnquiryPageProps {
-  params: {
-    id: string
-  }
-}
-
-export default async function EnquiryPage({ params }: EnquiryPageProps) {
-  const supabase = createServerComponentClient({ cookies })
-
-  // Fetch enquiry details
-  const { data: enquiry } = await supabase.from("enquiries").select("*").eq("id", params.id).single()
-
-  if (!enquiry) {
-    notFound()
-  }
-
+export default async function EnquiryDetailPage({ params }: { params: { id: string } }) {
   return (
-    <DashboardShell>
-      <DashboardHeader heading={`Enquiry from ${enquiry.name}`} description={`Enquiry ID: ${enquiry.id}`} />
-      <EnquiryDetails enquiry={enquiry} />
-    </DashboardShell>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Enquiry Details</h1>
+        <a
+          href="/enquiries"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+        >
+          Back to Enquiries
+        </a>
+      </div>
+      <EnquiryDetail id={params.id} />
+    </div>
   )
 }
 

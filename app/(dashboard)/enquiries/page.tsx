@@ -1,37 +1,23 @@
-import type { Metadata } from "next"
-import Link from "next/link"
-import { PlusCircle } from "lucide-react"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { EnquiryDetail } from "@/components/enquiry-detail"
 
-import { Button } from "@/components/ui/button"
-import { DashboardHeader } from "@/components/dashboard-header"
-import { DashboardShell } from "@/components/dashboard-shell"
-import { EnquiriesTable } from "@/components/enquiries-table"
-
-export const metadata: Metadata = {
-  title: "Enquiries | Iris CRM",
-  description: "Manage your enquiries and convert them to customers",
+export const metadata = {
+  title: "Enquiry Details | Iris CRM",
 }
 
-export default async function EnquiriesPage() {
-  const supabase = createServerComponentClient({ cookies })
-
-  // Fetch enquiries
-  const { data: enquiries } = await supabase.from("enquiries").select("*").order("created_at", { ascending: false })
-
+export default async function EnquiryDetailPage({ params }: { params: { id: string } }) {
   return (
-    <DashboardShell>
-      <DashboardHeader heading="Enquiries" description="Manage your enquiries and convert them to customers">
-        <Button asChild>
-          <Link href="/enquiries/new">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Enquiry
-          </Link>
-        </Button>
-      </DashboardHeader>
-      <EnquiriesTable enquiries={enquiries || []} />
-    </DashboardShell>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Enquiry Details</h1>
+        <a
+          href="/enquiries"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+        >
+          Back to Enquiries
+        </a>
+      </div>
+      <EnquiryDetail id={params.id} />
+    </div>
   )
 }
 

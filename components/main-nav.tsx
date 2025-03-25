@@ -1,91 +1,86 @@
 "use client"
 
+import type React from "react"
+
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import {
-  LayoutDashboard,
-  Users,
-  FileText,
-  FileCheck,
-  BarChart3,
-  Settings,
-  Briefcase,
-  Receipt,
-  Package,
-} from "lucide-react"
+import { BarChart3, Calendar, ClipboardList, Home, Package, Settings, Users } from "lucide-react"
 
-const navItems = [
-  {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "Customers",
-    href: "/customers",
-    icon: Users,
-  },
-  {
-    name: "Enquiries",
-    href: "/enquiries",
-    icon: FileText,
-  },
-  {
-    name: "Quotes",
-    href: "/quotes",
-    icon: FileCheck,
-  },
-  {
-    name: "Jobs",
-    href: "/jobs",
-    icon: Briefcase,
-  },
-  {
-    name: "Invoices",
-    href: "/invoices",
-    icon: Receipt,
-  },
-  {
-    name: "Inventory",
-    href: "/inventory",
-    icon: Package,
-  },
-  {
-    name: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-  },
-  {
-    name: "Settings",
-    href: "/settings",
-    icon: Settings,
-  },
-]
+interface NavItem {
+  title: string
+  href: string
+  icon: React.ReactNode
+  roles: string[]
+}
 
-export function MainNav() {
+export function MainNav({ userRole }: { userRole: string }) {
   const pathname = usePathname()
 
+  const navItems: NavItem[] = [
+    {
+      title: "Dashboard",
+      href: "/dashboard",
+      icon: <Home className="h-5 w-5" />,
+      roles: ["admin", "sales", "installer"],
+    },
+    {
+      title: "Customers",
+      href: "/customers",
+      icon: <Users className="h-5 w-5" />,
+      roles: ["admin", "sales"],
+    },
+    {
+      title: "Quotes",
+      href: "/quotes",
+      icon: <ClipboardList className="h-5 w-5" />,
+      roles: ["admin", "sales"],
+    },
+    {
+      title: "Jobs",
+      href: "/jobs",
+      icon: <Calendar className="h-5 w-5" />,
+      roles: ["admin", "sales", "installer"],
+    },
+    {
+      title: "Inventory",
+      href: "/inventory",
+      icon: <Package className="h-5 w-5" />,
+      roles: ["admin", "sales"],
+    },
+    {
+      title: "Reports",
+      href: "/reports",
+      icon: <BarChart3 className="h-5 w-5" />,
+      roles: ["admin"],
+    },
+    {
+      title: "Settings",
+      href: "/settings",
+      icon: <Settings className="h-5 w-5" />,
+      roles: ["admin"],
+    },
+  ]
+
+  const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole))
+
   return (
-    <nav className="flex flex-col gap-2">
-      {navItems.map((item) => {
-        const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`)
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              isActive
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            {item.name}
-          </Link>
-        )
-      })}
+    <nav className="flex flex-col space-y-1">
+      {filteredNavItems.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={cn(
+            "flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+            pathname === item.href || pathname.startsWith(`${item.href}/`)
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground",
+          )}
+        >
+          {item.icon}
+          <span className="ml-3">{item.title}</span>
+        </Link>
+      ))}
     </nav>
   )
 }

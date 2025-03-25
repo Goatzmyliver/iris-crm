@@ -1,31 +1,18 @@
-"use client"
+import { redirect } from "next/navigation"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 
-import { useEffect } from "react"
-import { createClientComponentClient } from "@/lib/supabase"
-import { useRouter } from "next/navigation"
+export default async function Home() {
+  const supabase = createServerComponentClient({ cookies })
 
-export default function HomePage() {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession()
-
-      if (data.session) {
-        window.location.href = "/dashboard"
-      } else {
-        window.location.href = "/login"
-      }
-    }
-
-    checkAuth()
-  }, [supabase])
-
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="animate-pulse text-lg">Loading...</div>
-    </div>
-  )
+  if (session) {
+    redirect("/dashboard")
+  } else {
+    redirect("/auth/login")
+  }
 }
 

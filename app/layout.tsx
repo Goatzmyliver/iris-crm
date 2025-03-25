@@ -1,14 +1,14 @@
 import type React from "react"
-import "@/styles/globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "sonner"
+import { Toaster } from "@/components/ui/toaster"
+import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "Iris CRM",
-  description: "Customer relationship management system",
+  description: "Carpetland CRM & Quoting System",
     generator: 'v0.dev'
 }
 
@@ -20,9 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           {children}
-          <Toaster position="top-right" />
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

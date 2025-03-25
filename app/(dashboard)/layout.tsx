@@ -1,49 +1,53 @@
-"use client"
-
-import { useEffect, useState } from "react"
 import type React from "react"
-import { Sidebar } from "@/components/sidebar"
-import { Header } from "@/components/header"
-import { createClientComponentClient } from "@/lib/supabase"
-import { Loader2 } from "lucide-react"
+import { redirect } from "next/navigation"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+import { MainNav } from "@/components/main-nav"
+import { UserNav } from "@/components/user-nav"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const [loading, setLoading] = useState(true)
-  const supabase = createClientComponentClient()
+  const supabase = createServerComponentClient({ cookies })
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data, error } = await supabase.auth.getSession()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-      if (error || !data.session) {
-        window.location.href = "/login"
-        return
-      }
+  if (!session) {
+    redirect("/auth/login")
+  }
 
-      setLoading(false)
-    }
+  // Fetch user profile including role
+  const { data: userProfile } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
 
-    checkAuth()
-  }, [supabase])
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+  const user = {
+    id: session.user.id,
+    email: session.user.email!,
+    full_name: userProfile?.full_name,
+    avatar_url: userProfile?.avatar_url,
+    role: userProfile?.role || "sales", // Default to sales if no role is set
   }
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+      <header className="sticky top-0 z-40 border-b bg-background">
+        <div className="flex h-16 items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold">Iris CRM</h1>
+          </div>
+          <UserNav user={user} />
+        </div>
+      </header>
       <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 p-6 pt-16 md:pt-6">{children}</main>
+        <aside className="hidden w-64 border-r bg-background md:block">
+          <div className="flex h-full flex-col p-4">
+            <MainNav userRole={user.role} />
+          </div>
+        </aside>
+        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   )

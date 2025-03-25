@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,84 +19,68 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }).optional().or(z.literal("")),
   phone: z.string().min(5, { message: "Please enter a valid phone number." }),
   address: z.string().optional().or(z.literal("")),
-  enquiry_type: z.string().min(2, { message: "Please select an enquiry type." }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  source: z.string().optional(),
-  status: z.string().default("new"),
   notes: z.string().optional().or(z.literal("")),
+  stage: z.string().optional(),
 })
 
-export default function EnquiryForm() {
+export default function CustomerForm({ customer }: { customer?: any }) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [customers, setCustomers] = useState<any[]>([])
   const supabase = createClientComponentClient()
-
-  // Get customer ID from URL if present
-  const customerId = searchParams.get("customer")
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-      enquiry_type: "",
-      description: "",
-      source: "",
-      status: "new",
-      notes: "",
+      name: customer?.name || "",
+      email: customer?.email || "",
+      phone: customer?.phone || "",
+      address: customer?.address || "",
+      notes: customer?.notes || "",
+      stage: customer?.stage || "lead",
     },
   })
-
-  // If customerId is provided, fetch customer details and pre-fill the form
-  useEffect(() => {
-    const fetchCustomer = async () => {
-      if (customerId) {
-        const { data, error } = await supabase.from("customers").select("*").eq("id", customerId).single()
-
-        if (data && !error) {
-          form.setValue("name", data.name)
-          form.setValue("email", data.email || "")
-          form.setValue("phone", data.phone)
-          form.setValue("address", data.address || "")
-        }
-      }
-    }
-
-    fetchCustomer()
-  }, [customerId, form, supabase])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true)
 
     try {
-      // Get the current user for assigned_user_id
+      // Get the current user for owner_id
       const {
         data: { user },
       } = await supabase.auth.getUser()
 
-      // Create new enquiry
-      const { data, error } = await supabase
-        .from("enquiries")
-        .insert([
+      if (customer) {
+        // Update existing customer
+        const { error } = await supabase
+          .from("customers")
+          .update({
+            ...values,
+            owner_id: customer.owner_id || user?.id,
+          })
+          .eq("id", customer.id)
+
+        if (error) throw error
+
+        toast.success("Customer updated successfully")
+      } else {
+        // Create new customer
+        const { error } = await supabase.from("customers").insert([
           {
             ...values,
-            assigned_user_id: user?.id,
+            owner_id: user?.id,
           },
         ])
-        .select()
 
-      if (error) throw error
+        if (error) throw error
 
-      toast.success("Enquiry submitted successfully!")
-      router.push("/enquiries")
+        toast.success("Customer created successfully")
+      }
+
+      router.push("/customers")
       router.refresh()
     } catch (error: any) {
-      console.error("Error submitting enquiry:", error)
-      toast.error(error.message || "Failed to submit enquiry. Please try again.")
+      toast.error(error.message || "Failed to save customer")
+      console.error(error)
     } finally {
       setIsSubmitting(false)
     }
@@ -104,13 +88,9 @@ export default function EnquiryForm() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>New Enquiry</CardTitle>
-        <CardDescription>Fill out the form below to create a new enquiry.</CardDescription>
-      </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
             <FormField
               control={form.control}
               name="name"
@@ -171,65 +151,23 @@ export default function EnquiryForm() {
 
             <FormField
               control={form.control}
-              name="enquiry_type"
+              name="stage"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Enquiry Type</FormLabel>
+                  <FormLabel>Stage</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select enquiry type" />
+                        <SelectValue placeholder="Select a stage" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="general">General Inquiry</SelectItem>
-                      <SelectItem value="quote">Quote Request</SelectItem>
-                      <SelectItem value="support">Support</SelectItem>
-                      <SelectItem value="complaint">Complaint</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Please provide details about your inquiry..."
-                      className="min-h-[120px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="source"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Source</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="How did they find us?" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="website">Website</SelectItem>
-                      <SelectItem value="referral">Referral</SelectItem>
-                      <SelectItem value="social">Social Media</SelectItem>
-                      <SelectItem value="search">Search Engine</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="lead">Lead</SelectItem>
+                      <SelectItem value="prospect">Prospect</SelectItem>
+                      <SelectItem value="qualified">Qualified</SelectItem>
+                      <SelectItem value="proposal">Proposal</SelectItem>
+                      <SelectItem value="won">Won</SelectItem>
+                      <SelectItem value="lost">Lost</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -245,7 +183,7 @@ export default function EnquiryForm() {
                   <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Additional notes about this enquiry..."
+                      placeholder="Additional information about this customer..."
                       className="min-h-[100px]"
                       {...field}
                     />
@@ -257,7 +195,7 @@ export default function EnquiryForm() {
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? "Submitting..." : "Submit Enquiry"}
+              {isSubmitting ? "Saving..." : customer ? "Update Customer" : "Add Customer"}
             </Button>
           </CardFooter>
         </form>

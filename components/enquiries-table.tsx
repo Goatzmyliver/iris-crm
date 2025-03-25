@@ -8,45 +8,28 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Eye, Plus, Search } from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
 
-// Mock data for the table
-const mockEnquiries = [
-  {
-    id: "ENQ-001",
-    name: "John Smith",
-    email: "john.smith@example.com",
-    subject: "Product Information",
-    status: "new",
-    date: "2023-05-15",
-  },
-  {
-    id: "ENQ-002",
-    name: "Sarah Johnson",
-    email: "sarah.j@example.com",
-    subject: "Service Inquiry",
-    status: "in-progress",
-    date: "2023-05-14",
-  },
-  {
-    id: "ENQ-003",
-    name: "Michael Brown",
-    email: "m.brown@example.com",
-    subject: "Quote Request",
-    status: "completed",
-    date: "2023-05-10",
-  },
-]
+interface Enquiry {
+  id: number
+  name: string
+  email: string | null
+  phone: string
+  enquiry_type: string
+  status: string
+  created_at: string
+}
 
-export default function EnquiriesTable() {
+export default function EnquiriesTable({ enquiries }: { enquiries: Enquiry[] }) {
   const [searchTerm, setSearchTerm] = useState("")
 
   // Filter enquiries based on search term
-  const filteredEnquiries = mockEnquiries.filter(
+  const filteredEnquiries = enquiries.filter(
     (enquiry) =>
       enquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enquiry.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enquiry.id.toLowerCase().includes(searchTerm.toLowerCase()),
+      (enquiry.email && enquiry.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      enquiry.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      enquiry.enquiry_type.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   // Status badge color mapping
@@ -54,6 +37,7 @@ export default function EnquiriesTable() {
     new: "bg-blue-500",
     "in-progress": "bg-yellow-500",
     completed: "bg-green-500",
+    closed: "bg-gray-500",
   }
 
   return (
@@ -85,10 +69,9 @@ export default function EnquiriesTable() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead className="hidden md:table-cell">Email</TableHead>
-                <TableHead className="hidden md:table-cell">Subject</TableHead>
+                <TableHead className="hidden md:table-cell">Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden md:table-cell">Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -98,17 +81,18 @@ export default function EnquiriesTable() {
               {filteredEnquiries.length > 0 ? (
                 filteredEnquiries.map((enquiry) => (
                   <TableRow key={enquiry.id}>
-                    <TableCell className="font-medium">{enquiry.id}</TableCell>
-                    <TableCell>{enquiry.name}</TableCell>
-                    <TableCell className="hidden md:table-cell">{enquiry.email}</TableCell>
-                    <TableCell className="hidden md:table-cell">{enquiry.subject}</TableCell>
+                    <TableCell className="font-medium">{enquiry.name}</TableCell>
+                    <TableCell className="hidden md:table-cell">{enquiry.email || "-"}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {enquiry.enquiry_type.charAt(0).toUpperCase() + enquiry.enquiry_type.slice(1)}
+                    </TableCell>
                     <TableCell>
-                      <Badge className={statusColors[enquiry.status as keyof typeof statusColors]}>
+                      <Badge className={statusColors[enquiry.status as keyof typeof statusColors] || "bg-gray-500"}>
                         {enquiry.status.charAt(0).toUpperCase() + enquiry.status.slice(1)}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {new Date(enquiry.date).toLocaleDateString()}
+                      {formatDistanceToNow(new Date(enquiry.created_at), { addSuffix: true })}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" asChild>
@@ -122,8 +106,8 @@ export default function EnquiriesTable() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                    No enquiries found
+                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                    {enquiries.length === 0 ? "No enquiries found" : "No matching enquiries found"}
                   </TableCell>
                 </TableRow>
               )}

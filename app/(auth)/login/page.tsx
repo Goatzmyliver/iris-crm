@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -23,6 +23,18 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const supabase = createClientComponentClient()
 
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (data.session) {
+        router.push("/dashboard")
+      }
+    }
+
+    checkSession()
+  }, [router, supabase.auth])
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -35,7 +47,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       })
@@ -45,8 +57,9 @@ export default function LoginPage() {
       }
 
       toast.success("Logged in successfully")
-      router.push("/dashboard")
-      router.refresh()
+
+      // Force a hard navigation to dashboard
+      window.location.href = "/dashboard"
     } catch (error: any) {
       toast.error(error.message || "Failed to login")
       console.error(error)

@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createClientComponentClient } from "@/lib/supabase"
+import { createClient } from "@supabase/supabase-js"
 import { toast } from "sonner"
 
 const formSchema = z.object({
@@ -26,7 +26,10 @@ const formSchema = z.object({
 export default function CustomerForm({ customer }: { customer?: any }) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const supabase = createClientComponentClient()
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+  )
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

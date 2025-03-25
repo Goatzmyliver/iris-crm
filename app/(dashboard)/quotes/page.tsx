@@ -1,11 +1,9 @@
 "use client"
 
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getQuotes } from "@/lib/data"
 import { Plus } from "lucide-react"
 
 export default async function QuotesPage({
@@ -13,18 +11,8 @@ export default async function QuotesPage({
 }: {
   searchParams: { status?: string }
 }) {
-  const supabase = createServerComponentClient({ cookies })
   const status = searchParams.status || ""
-
-  let query = supabase.from("quotes").select("*, customers(full_name)")
-
-  if (status) {
-    query = query.eq("status", status)
-  }
-
-  const { data: quotes } = await query.order("created_at", {
-    ascending: false,
-  })
+  const quotes = await getQuotes(status)
 
   return (
     <div className="space-y-6">
@@ -40,31 +28,27 @@ export default async function QuotesPage({
 
       <div className="flex items-center space-x-2">
         <form className="flex-1 sm:max-w-xs">
-          <Select
+          <select
             name="status"
             defaultValue={status}
-            onValueChange={(value) => {
+            onChange={(e) => {
               const url = new URL(window.location.href)
-              if (value) {
-                url.searchParams.set("status", value)
+              if (e.target.value) {
+                url.searchParams.set("status", e.target.value)
               } else {
                 url.searchParams.delete("status")
               }
               window.location.href = url.toString()
             }}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-            </SelectContent>
-          </Select>
+            <option value="all">All Statuses</option>
+            <option value="draft">Draft</option>
+            <option value="sent">Sent</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="expired">Expired</option>
+          </select>
         </form>
       </div>
 

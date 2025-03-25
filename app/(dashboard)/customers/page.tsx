@@ -1,9 +1,8 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { getCustomers } from "@/lib/data"
 import { Plus, Search } from "lucide-react"
 
 export default async function CustomersPage({
@@ -11,18 +10,8 @@ export default async function CustomersPage({
 }: {
   searchParams: { search?: string }
 }) {
-  const supabase = createServerComponentClient({ cookies })
   const search = searchParams.search || ""
-
-  let query = supabase.from("customers").select("*")
-
-  if (search) {
-    query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
-  }
-
-  const { data: customers } = await query.order("created_at", {
-    ascending: false,
-  })
+  const customers = await getCustomers(search)
 
   return (
     <div className="space-y-6">

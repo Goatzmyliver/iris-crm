@@ -1,29 +1,17 @@
 "use client"
 
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getJobs } from "@/lib/data"
 
 export default async function JobsPage({
   searchParams,
 }: {
   searchParams: { status?: string }
 }) {
-  const supabase = createServerComponentClient({ cookies })
   const status = searchParams.status || ""
-
-  let query = supabase.from("jobs").select("*, customers(full_name), quotes(id)")
-
-  if (status) {
-    query = query.eq("status", status)
-  }
-
-  const { data: jobs } = await query.order("scheduled_date", {
-    ascending: true,
-  })
+  const jobs = await getJobs(status)
 
   return (
     <div className="space-y-6">
@@ -33,30 +21,26 @@ export default async function JobsPage({
 
       <div className="flex items-center space-x-2">
         <form className="flex-1 sm:max-w-xs">
-          <Select
+          <select
             name="status"
             defaultValue={status}
-            onValueChange={(value) => {
+            onChange={(e) => {
               const url = new URL(window.location.href)
-              if (value) {
-                url.searchParams.set("status", value)
+              if (e.target.value) {
+                url.searchParams.set("status", e.target.value)
               } else {
                 url.searchParams.delete("status")
               }
               window.location.href = url.toString()
             }}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+            <option value="all">All Statuses</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
         </form>
       </div>
 

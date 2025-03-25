@@ -1,23 +1,10 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+import { getReportData } from "@/lib/data"
 
 export default async function ReportsPage() {
-  const supabase = createServerComponentClient({ cookies })
-
-  // Fetch data for reports
-  const [{ data: salesData }, { data: jobsData }, { data: inventoryData }] = await Promise.all([
-    supabase.rpc("get_monthly_sales"),
-    supabase.rpc("get_job_status_counts"),
-    supabase.rpc("get_inventory_status"),
-  ])
-
-  // Format data for charts
-  const formattedSalesData = salesData || []
-  const formattedJobsData = jobsData || []
-  const formattedInventoryData = inventoryData || []
+  const { salesData, jobsData, inventoryData } = await getReportData()
 
   // Colors for pie charts
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"]
@@ -44,7 +31,7 @@ export default async function ReportsPage() {
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={formattedSalesData}
+                    data={salesData}
                     margin={{
                       top: 20,
                       right: 30,
@@ -74,7 +61,7 @@ export default async function ReportsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={formattedJobsData}
+                      data={jobsData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -84,7 +71,7 @@ export default async function ReportsPage() {
                       dataKey="count"
                       nameKey="status"
                     >
-                      {formattedJobsData.map((entry, index) => (
+                      {jobsData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -106,7 +93,7 @@ export default async function ReportsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={formattedInventoryData}
+                      data={inventoryData}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -116,7 +103,7 @@ export default async function ReportsPage() {
                       dataKey="count"
                       nameKey="status"
                     >
-                      {formattedInventoryData.map((entry, index) => (
+                      {inventoryData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>

@@ -1,9 +1,8 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { getProducts } from "@/lib/data"
 import { Plus, Search } from "lucide-react"
 
 export default async function InventoryPage({
@@ -11,16 +10,8 @@ export default async function InventoryPage({
 }: {
   searchParams: { search?: string }
 }) {
-  const supabase = createServerComponentClient({ cookies })
   const search = searchParams.search || ""
-
-  let query = supabase.from("products").select("*")
-
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,sku.ilike.%${search}%`)
-  }
-
-  const { data: products } = await query.order("name")
+  const products = await getProducts(search)
 
   return (
     <div className="space-y-6">

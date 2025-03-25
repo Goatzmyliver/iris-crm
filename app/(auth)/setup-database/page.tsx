@@ -20,11 +20,11 @@ export default function SetupDatabasePage() {
       // Create customers table
       await supabase.rpc("create_customers_table")
 
-      // Create enquiries table
-      await supabase.rpc("create_enquiries_table")
+      // Create leads table
+      await supabase.rpc("create_leads_table")
 
-      // Create quotes table
-      await supabase.rpc("create_quotes_table")
+      // Create deals table
+      await supabase.rpc("create_deals_table")
 
       toast.success("Database setup completed successfully!")
       router.push("/dashboard")
@@ -48,8 +48,8 @@ export default function SetupDatabasePage() {
         </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
           <li>Customers</li>
-          <li>Enquiries</li>
-          <li>Quotes</li>
+          <li>Leads</li>
+          <li>Deals</li>
         </ul>
         <p className="text-sm text-muted-foreground">
           Note: You need to create the following stored procedures in your Supabase SQL editor first:
@@ -73,15 +73,15 @@ begin
 end;
 $$ language plpgsql;
 
--- Create enquiries table function
-create or replace function create_enquiries_table()
+-- Create leads table function
+create or replace function create_leads_table()
 returns void as $$
 begin
-  create table if not exists enquiries (
+  create table if not exists leads (
     id uuid primary key default uuid_generate_v4(),
+    title text not null,
+    description text,
     customer_id uuid references customers(id),
-    subject text not null,
-    message text,
     status text default 'new',
     source text,
     created_at timestamp with time zone default now(),
@@ -90,17 +90,18 @@ begin
 end;
 $$ language plpgsql;
 
--- Create quotes table function
-create or replace function create_quotes_table()
+-- Create deals table function
+create or replace function create_deals_table()
 returns void as $$
 begin
-  create table if not exists quotes (
+  create table if not exists deals (
     id uuid primary key default uuid_generate_v4(),
+    title text not null,
     customer_id uuid references customers(id),
-    enquiry_id uuid references enquiries(id),
+    lead_id uuid references leads(id),
     amount decimal(10,2) not null,
-    status text default 'draft',
-    valid_until date,
+    status text default 'active',
+    expected_close_date date,
     notes text,
     created_at timestamp with time zone default now(),
     updated_at timestamp with time zone default now()

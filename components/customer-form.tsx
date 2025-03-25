@@ -10,26 +10,22 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createClient } from "@supabase/supabase-js"
+import { createClientComponentClient } from "@/lib/supabase"
 import { toast } from "sonner"
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }).optional().or(z.literal("")),
-  phone: z.string().min(5, { message: "Please enter a valid phone number." }),
+  phone: z.string().optional().or(z.literal("")),
+  company: z.string().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
-  stage: z.string().optional(),
 })
 
-export default function CustomerForm({ customer }: { customer?: any }) {
+export function CustomerForm({ customer }: { customer?: any }) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-  )
+  const supabase = createClientComponentClient()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,9 +33,9 @@ export default function CustomerForm({ customer }: { customer?: any }) {
       name: customer?.name || "",
       email: customer?.email || "",
       phone: customer?.phone || "",
+      company: customer?.company || "",
       address: customer?.address || "",
       notes: customer?.notes || "",
-      stage: customer?.stage || "lead",
     },
   })
 
@@ -58,7 +54,7 @@ export default function CustomerForm({ customer }: { customer?: any }) {
           .from("customers")
           .update({
             ...values,
-            owner_id: customer.owner_id || user?.id,
+            updated_at: new Date().toISOString(),
           })
           .eq("id", customer.id)
 
@@ -140,12 +136,12 @@ export default function CustomerForm({ customer }: { customer?: any }) {
 
             <FormField
               control={form.control}
-              name="address"
+              name="company"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>Company</FormLabel>
                   <FormControl>
-                    <Input placeholder="123 Main St, City, Country" {...field} />
+                    <Input placeholder="Acme Inc." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -154,25 +150,13 @@ export default function CustomerForm({ customer }: { customer?: any }) {
 
             <FormField
               control={form.control}
-              name="stage"
+              name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Stage</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a stage" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="lead">Lead</SelectItem>
-                      <SelectItem value="prospect">Prospect</SelectItem>
-                      <SelectItem value="qualified">Qualified</SelectItem>
-                      <SelectItem value="proposal">Proposal</SelectItem>
-                      <SelectItem value="won">Won</SelectItem>
-                      <SelectItem value="lost">Lost</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="123 Main St, City, Country" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -206,4 +190,6 @@ export default function CustomerForm({ customer }: { customer?: any }) {
     </Card>
   )
 }
+
+export default CustomerForm
 

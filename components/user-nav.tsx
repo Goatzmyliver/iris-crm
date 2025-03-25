@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,6 +23,7 @@ interface UserNavProps {
 }
 
 export function UserNav({ user }: UserNavProps) {
+  const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const supabase = createClientComponentClient()
 
@@ -39,9 +41,8 @@ export function UserNav({ user }: UserNavProps) {
       setIsLoggingOut(true)
       await supabase.auth.signOut()
       toast.success("Signed out successfully")
-
-      // Use window.location for a hard redirect
-      window.location.href = "/login"
+      router.push("/login")
+      router.refresh()
     } catch (error) {
       toast.error("Error signing out")
       console.error(error)
@@ -68,7 +69,7 @@ export function UserNav({ user }: UserNavProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => (window.location.href = "/settings")}>Settings</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/settings")}>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled={isLoggingOut} onClick={handleSignOut}>
           {isLoggingOut ? "Signing out..." : "Sign out"}

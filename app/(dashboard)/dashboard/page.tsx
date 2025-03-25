@@ -1,91 +1,108 @@
-"use client"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DashboardStats } from "@/components/dashboard-stats"
+import { RecentCustomers } from "@/components/recent-customers"
+import { RecentLeads } from "@/components/recent-leads"
+import { createServerComponentClient } from "@/lib/supabase"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@supabase/supabase-js"
-import { Loader2 } from "lucide-react"
+export default async function DashboardPage() {
+  const supabase = createServerComponentClient()
 
-export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  // Fetch stats
+  const { data: customersCount } = await supabase.from("customers").select("*", { count: "exact", head: true })
 
-  // Create a Supabase client directly
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-  )
+  const { data: leadsCount } = await supabase
+    .from("leads")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "open")
 
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data, error } = await supabase.auth.getUser()
+  const { data: dealsValue } = await supabase.from("deals").select("amount").eq("status", "active")
 
-        if (error) {
-          throw error
-        }
+  const totalDealsValue = dealsValue?.reduce((sum, deal) => sum + (Number.parseFloat(deal.amount) || 0), 0) || 0
 
-        if (data?.user) {
-          setUser(data.user)
-        } else {
-          // If no user is found, redirect to login
-          window.location.href = "/login"
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error)
-        // On error, redirect to login
-        window.location.href = "/login"
-      } finally {
-        setLoading(false)
-      }
-    }
+  // Fetch recent customers
+  const { data: recentCustomers } = await supabase
+    .from("customers")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(5)
 
-    getUser()
-  }, [])
-
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut()
-      window.location.href = "/login"
-    } catch (error) {
-      console.error("Error signing out:", error)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-      </div>
-    )
-  }
+  // Fetch recent leads
+  const { data: recentLeads } = await supabase
+    .from("leads")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(5)
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <button onClick={handleSignOut} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-          Sign Out
-        </button>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
       </div>
 
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">User Information</h2>
-        <div className="space-y-2">
-          <p>
-            <strong>Email:</strong> {user.email}
-          </p>
-          <p>
-            <strong>ID:</strong> {user.id}
-          </p>
-          <p>
-            <strong>Last Sign In:</strong> {new Date(user.last_sign_in_at).toLocaleString()}
-          </p>
-        </div>
+      <DashboardStats
+        stats={{
+          customersCount: customersCount?.length || 0,
+          activeLeads: leadsCount?.length || 0,
+          dealsValue: totalDealsValue,
+        }}
+      />
 
-        <div className="mt-6">
-          <h3 className="text-lg font-medium mb-2">User Metadata</h3>
-          <pre className="bg-gray-100 p-3 rounded overflow-auto">{JSON.stringify(user.user_metadata, null, 2)}</pre>
-        </div>
-      </div>
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="customers">Customers</TabsTrigger>
+          <TabsTrigger value="leads">Leads</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Customers</CardTitle>
+                <CardDescription>Your most recently added customers</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RecentCustomers customers={recentCustomers || []} />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Leads</CardTitle>
+                <CardDescription>Your most recently added leads</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RecentLeads leads={recentLeads || []} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="customers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Customers</CardTitle>
+              <CardDescription>Manage and view all your customers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                This section will display a comprehensive list of all your customers.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="leads" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Leads</CardTitle>
+              <CardDescription>Manage and view all your leads</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                This section will display a comprehensive list of all your leads.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

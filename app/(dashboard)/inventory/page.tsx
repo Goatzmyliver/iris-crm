@@ -1,17 +1,35 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { getProducts } from "@/lib/data"
+import { getProducts } from "@/lib/data-client"
+import { useSearchParams } from "next/navigation"
 import { Plus, Search } from "lucide-react"
 
-export default async function InventoryPage({
-  searchParams,
-}: {
-  searchParams: { search?: string }
-}) {
-  const search = searchParams.search || ""
-  const products = await getProducts(search)
+export default function InventoryPage() {
+  const searchParams = useSearchParams()
+  const search = searchParams.get("search") || ""
+  const [products, setProducts] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const data = await getProducts(search)
+        setProducts(data)
+      } catch (error) {
+        console.error("Error fetching products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [search])
 
   return (
     <div className="space-y-6">
@@ -40,63 +58,69 @@ export default async function InventoryPage({
         </form>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {products?.map((product) => (
-          <Link key={product.id} href={`/inventory/${product.id}`}>
-            <Card className="h-full cursor-pointer transition-colors hover:bg-muted/50">
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle>{product.name}</CardTitle>
-                    <CardDescription>{product.sku}</CardDescription>
-                  </div>
-                  <div>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        product.stock_level > product.low_stock_threshold
-                          ? "bg-green-100 text-green-800"
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {products?.map((product) => (
+            <Link key={product.id} href={`/inventory/${product.id}`}>
+              <Card className="h-full cursor-pointer transition-colors hover:bg-muted/50">
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle>{product.name}</CardTitle>
+                      <CardDescription>{product.sku}</CardDescription>
+                    </div>
+                    <div>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          product.stock_level > product.low_stock_threshold
+                            ? "bg-green-100 text-green-800"
+                            : product.stock_level > 0
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {product.stock_level > product.low_stock_threshold
+                          ? "In Stock"
                           : product.stock_level > 0
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {product.stock_level > product.low_stock_threshold
-                        ? "In Stock"
-                        : product.stock_level > 0
-                          ? "Low Stock"
-                          : "Out of Stock"}
-                    </span>
+                            ? "Low Stock"
+                            : "Out of Stock"}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      Stock: {product.stock_level} {product.unit}
-                    </p>
-                    <p className="mt-1 text-lg font-bold">${product.price.toFixed(2)}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Stock: {product.stock_level} {product.unit}
+                      </p>
+                      <p className="mt-1 text-lg font-bold">${product.price.toFixed(2)}</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
 
-        {products?.length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-            <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-              <h3 className="mt-4 text-lg font-semibold">No products found</h3>
-              <p className="mb-4 mt-2 text-sm text-muted-foreground">
-                {search ? `No products match "${search}"` : "You haven't added any products yet."}
-              </p>
-              <Button asChild>
-                <Link href="/inventory/new">Add Product</Link>
-              </Button>
+          {products?.length === 0 && (
+            <div className="col-span-full flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+              <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
+                <h3 className="mt-4 text-lg font-semibold">No products found</h3>
+                <p className="mb-4 mt-2 text-sm text-muted-foreground">
+                  {search ? `No products match "${search}"` : "You haven't added any products yet."}
+                </p>
+                <Button asChild>
+                  <Link href="/inventory/new">Add Product</Link>
+                </Button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

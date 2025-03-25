@@ -45,12 +45,15 @@ export default function LoginPage() {
       }
 
       toast.success("Logged in successfully")
-      router.push("/dashboard")
-      router.refresh()
+
+      // Add a small delay to ensure the session is set
+      setTimeout(() => {
+        // Use window.location for a hard redirect instead of router.push
+        window.location.href = "/dashboard"
+      }, 500)
     } catch (error: any) {
       toast.error(error.message || "Failed to login")
       console.error(error)
-    } finally {
       setIsLoading(false)
     }
   }

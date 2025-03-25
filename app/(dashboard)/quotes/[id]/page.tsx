@@ -4,7 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Pencil, Send, FileText, Calendar } from "lucide-react"
+import { Pencil, Send, FileText, Calendar, ArrowRight } from "lucide-react"
 
 export default async function QuoteDetailPage({
   params,
@@ -15,7 +15,11 @@ export default async function QuoteDetailPage({
   const { id } = params
 
   // Fetch quote details
-  const { data: quote, error } = await supabase.from("quotes").select("*, customers(*)").eq("id", id).single()
+  const { data: quote, error } = await supabase
+    .from("quotes")
+    .select("*, customers(*), enquiries(*)")
+    .eq("id", id)
+    .single()
 
   if (error || !quote) {
     notFound()
@@ -113,6 +117,27 @@ export default async function QuoteDetailPage({
                   <p className="text-sm text-muted-foreground whitespace-pre-line">{quote.notes}</p>
                 </div>
               )}
+
+              {/* Only show profit information to staff */}
+              <div className="rounded-md border p-4 bg-muted/20">
+                <h4 className="mb-2 font-medium">Profit Information (Internal Only)</h4>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Cost Total:</span>
+                    <span>${quote.cost_total?.toFixed(2) || "0.00"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Profit:</span>
+                    <span>${quote.profit?.toFixed(2) || "0.00"}</span>
+                  </div>
+                  <div className="flex justify-between font-medium">
+                    <span>Profit Margin:</span>
+                    <span>
+                      {quote.total_amount > 0 ? ((quote.profit / quote.total_amount) * 100).toFixed(2) : "0.00"}%
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -147,6 +172,10 @@ export default async function QuoteDetailPage({
                   <span className="text-sm font-medium">{new Date(quote.expiry_date).toLocaleDateString()}</span>
                 </div>
               )}
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-sm">Show Item Breakdown</span>
+                <span className="text-sm font-medium">{quote.show_item_breakdown ? "Yes" : "No"}</span>
+              </div>
             </CardContent>
           </Card>
 
@@ -175,6 +204,29 @@ export default async function QuoteDetailPage({
               </Button>
             </CardFooter>
           </Card>
+
+          {quote.enquiry_id && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Enquiry</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">This quote was created from an enquiry</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {quote.enquiries?.description?.substring(0, 100)}
+                  {quote.enquiries?.description?.length > 100 ? "..." : ""}
+                </p>
+              </CardContent>
+              <CardFooter>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href={`/enquiries/${quote.enquiry_id}`}>
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    View Enquiry
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,42 +11,124 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, Calculator } from "lucide-react"
 
 export default function NewQuotePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const enquiryId = searchParams.get("enquiry")
+  const customerId = searchParams.get("customer")
+
   const supabase = createClientComponentClient()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingInitialData, setIsLoadingInitialData] = useState(false)
   const [customers, setCustomers] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
+  const [showItemBreakdown, setShowItemBreakdown] = useState(true)
+  const [markupPercentage, setMarkupPercentage] = useState(30)
+
   const [formData, setFormData] = useState({
     customer_id: "",
+    enquiry_id: enquiryId || "",
     expiry_date: "",
     notes: "",
     status: "draft",
-    items: [{ product_id: "", description: "", quantity: 1, unit_price: 0 }],
+    items: [{ product_id: "", description: "", quantity: 1, unit_price: 0, cost_price: 0 }],
   })
 
   useEffect(() => {
-    const fetchData = async () => {
-      const [customersResponse, productsResponse] = await Promise.all([
-        supabase.from("customers").select("*").order("full_name"),
-        supabase.from("products").select("*").order("name"),
-      ])
+    const fetchInitialData = async () => {
+      setIsLoadingInitialData(true)
+      try {
+        // Fetch products
+        const { data: productsData } = await supabase.from("products").select("*").order("name")
 
-      if (customersResponse.data) {
-        setCustomers(customersResponse.data)
-      }
+        if (productsData) {
+          setProducts(productsData)
+        }
 
-      if (productsResponse.data) {
-        setProducts(productsResponse.data)
+        // If we have an enquiry ID, fetch the enquiry and customer
+        if (enquiryId) {
+          const { data: enquiry } = await supabase
+            .from("enquiries")
+            .select("*, customers(*)")
+            .eq("id", enquiryId)
+            .single()
+
+          if (enquiry) {
+            setFormData((prev) => ({
+              ...prev,
+              customer_id: enquiry.customer_id,
+              notes: enquiry.description || prev.notes,
+            }))
+
+            // Set expiry date to 30 days from now
+            const expiryDate = new Date()
+            expiryDate.setDate(expiryDate.getDate() + 30)
+            setFormData((prev) => ({
+              ...prev,
+              expiry_date: expiryDate.toISOString().split("T")[0],
+            }))
+
+            // Only fetch this customer
+            setCustomers([enquiry.customers])
+          }
+        }
+        // If we have a customer ID but no enquiry
+        else if (customerId) {
+          const { data: customer } = await supabase.from("customers").select("*").eq("id", customerId).single()
+
+          if (customer) {
+            setFormData((prev) => ({
+              ...prev,
+              customer_id: customer.id,
+            }))
+
+            // Set expiry date to 30 days from now
+            const expiryDate = new Date()
+            expiryDate.setDate(expiryDate.getDate() + 30)
+            setFormData((prev) => ({
+              ...prev,
+              expiry_date: expiryDate.toISOString().split("T")[0],
+            }))
+
+            // Only fetch this customer
+            setCustomers([customer])
+          }
+        }
+        // Otherwise fetch all customers
+        else {
+          const { data: customersData } = await supabase.from("customers").select("*").order("full_name")
+
+          if (customersData) {
+            setCustomers(customersData)
+          }
+
+          // Set expiry date to 30 days from now
+          const expiryDate = new Date()
+          expiryDate.setDate(expiryDate.getDate() + 30)
+          setFormData((prev) => ({
+            ...prev,
+            expiry_date: expiryDate.toISOString().split("T")[0],
+          }))
+        }
+      } catch (error) {
+        console.error("Error fetching initial data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load initial data",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoadingInitialData(false)
       }
     }
 
-    fetchData()
-  }, [supabase])
+    fetchInitialData()
+  }, [supabase, enquiryId, customerId, toast])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -61,14 +143,33 @@ export default function NewQuotePage() {
     const updatedItems = [...formData.items]
     updatedItems[index] = { ...updatedItems[index], [field]: value }
 
-    // If product_id changed, update description and unit_price
+    // If product_id changed, update description, unit_price, and cost_price
     if (field === "product_id") {
       const product = products.find((p) => p.id === value)
       if (product) {
         updatedItems[index].description = product.name
-        updatedItems[index].unit_price = product.price
+        updatedItems[index].unit_price = calculateMarkupPrice(product.price, markupPercentage)
+        updatedItems[index].cost_price = product.price
       }
     }
+
+    // If cost_price changed, recalculate unit_price based on markup
+    if (field === "cost_price") {
+      updatedItems[index].unit_price = calculateMarkupPrice(value, markupPercentage)
+    }
+
+    setFormData((prev) => ({ ...prev, items: updatedItems }))
+  }
+
+  const calculateMarkupPrice = (cost: number, markup: number) => {
+    return Number((cost * (1 + markup / 100)).toFixed(2))
+  }
+
+  const recalculateAllPrices = () => {
+    const updatedItems = formData.items.map((item) => ({
+      ...item,
+      unit_price: calculateMarkupPrice(item.cost_price, markupPercentage),
+    }))
 
     setFormData((prev) => ({ ...prev, items: updatedItems }))
   }
@@ -76,7 +177,7 @@ export default function NewQuotePage() {
   const addItem = () => {
     setFormData((prev) => ({
       ...prev,
-      items: [...prev.items, { product_id: "", description: "", quantity: 1, unit_price: 0 }],
+      items: [...prev.items, { product_id: "", description: "", quantity: 1, unit_price: 0, cost_price: 0 }],
     }))
   }
 
@@ -86,8 +187,22 @@ export default function NewQuotePage() {
     setFormData((prev) => ({ ...prev, items: updatedItems }))
   }
 
-  const calculateTotal = () => {
+  const calculateSubtotal = () => {
     return formData.items.reduce((total, item) => total + item.quantity * item.unit_price, 0)
+  }
+
+  const calculateCostTotal = () => {
+    return formData.items.reduce((total, item) => total + item.quantity * item.cost_price, 0)
+  }
+
+  const calculateProfit = () => {
+    return calculateSubtotal() - calculateCostTotal()
+  }
+
+  const calculateProfitMargin = () => {
+    const subtotal = calculateSubtotal()
+    if (subtotal === 0) return 0
+    return (calculateProfit() / subtotal) * 100
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,7 +211,9 @@ export default function NewQuotePage() {
 
     try {
       // Calculate total amount
-      const total_amount = calculateTotal()
+      const total_amount = calculateSubtotal()
+      const cost_total = calculateCostTotal()
+      const profit = calculateProfit()
 
       // Create quote
       const { data: quote, error: quoteError } = await supabase
@@ -104,10 +221,14 @@ export default function NewQuotePage() {
         .insert([
           {
             customer_id: formData.customer_id,
+            enquiry_id: formData.enquiry_id || null,
             expiry_date: formData.expiry_date,
             notes: formData.notes,
             status: formData.status,
             total_amount,
+            cost_total,
+            profit,
+            show_item_breakdown: showItemBreakdown,
           },
         ])
         .select()
@@ -118,15 +239,21 @@ export default function NewQuotePage() {
       // Create quote items
       const quoteItems = formData.items.map((item) => ({
         quote_id: quote.id,
-        product_id: item.product_id,
+        product_id: item.product_id || null,
         description: item.description,
         quantity: item.quantity,
         unit_price: item.unit_price,
+        cost_price: item.cost_price,
       }))
 
       const { error: itemsError } = await supabase.from("quote_items").insert(quoteItems)
 
       if (itemsError) throw itemsError
+
+      // If this quote is from an enquiry, update the enquiry status to "quoted"
+      if (formData.enquiry_id) {
+        await supabase.from("enquiries").update({ status: "quoted" }).eq("id", formData.enquiry_id)
+      }
 
       toast({
         title: "Quote created",
@@ -146,6 +273,14 @@ export default function NewQuotePage() {
     }
   }
 
+  if (isLoadingInitialData) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-4xl">
       <h2 className="mb-6 text-3xl font-bold tracking-tight">New Quote</h2>
@@ -163,6 +298,7 @@ export default function NewQuotePage() {
                   value={formData.customer_id}
                   onValueChange={(value) => handleSelectChange("customer_id", value)}
                   required
+                  disabled={!!enquiryId || !!customerId}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a customer" />
@@ -216,18 +352,44 @@ export default function NewQuotePage() {
                   placeholder="Additional information about the quote"
                 />
               </div>
+              <div className="flex items-center space-x-2">
+                <Switch id="show-breakdown" checked={showItemBreakdown} onCheckedChange={setShowItemBreakdown} />
+                <Label htmlFor="show-breakdown">Show item breakdown to customer</Label>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Quote Items</CardTitle>
-              <CardDescription>Add products and services to the quote</CardDescription>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                <div>
+                  <CardTitle>Quote Items</CardTitle>
+                  <CardDescription>Add products and services to the quote</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="markup" className="text-sm whitespace-nowrap">
+                    Markup %:
+                  </Label>
+                  <Input
+                    id="markup"
+                    type="number"
+                    min="0"
+                    max="100"
+                    className="w-20"
+                    value={markupPercentage}
+                    onChange={(e) => setMarkupPercentage(Number(e.target.value))}
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={recalculateAllPrices}>
+                    <Calculator className="h-4 w-4 mr-1" />
+                    Apply
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {formData.items.map((item, index) => (
-                <div key={index} className="grid gap-4 rounded-lg border p-4 sm:grid-cols-6">
-                  <div className="sm:col-span-2">
+                <div key={index} className="grid gap-4 rounded-lg border p-4 sm:grid-cols-12">
+                  <div className="sm:col-span-4">
                     <Label htmlFor={`product_${index}`}>Product</Label>
                     <Select
                       value={item.product_id}
@@ -246,7 +408,7 @@ export default function NewQuotePage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-4">
                     <Label htmlFor={`description_${index}`}>Description</Label>
                     <Input
                       id={`description_${index}`}
@@ -255,8 +417,8 @@ export default function NewQuotePage() {
                       required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor={`quantity_${index}`}>Quantity</Label>
+                  <div className="sm:col-span-1">
+                    <Label htmlFor={`quantity_${index}`}>Qty</Label>
                     <Input
                       id={`quantity_${index}`}
                       type="number"
@@ -266,29 +428,41 @@ export default function NewQuotePage() {
                       required
                     />
                   </div>
-                  <div>
-                    <Label htmlFor={`price_${index}`}>Unit Price</Label>
-                    <div className="flex items-center">
-                      <Input
-                        id={`price_${index}`}
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={item.unit_price}
-                        onChange={(e) => handleItemChange(index, "unit_price", Number.parseFloat(e.target.value))}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="ml-2"
-                        onClick={() => removeItem(index)}
-                        disabled={formData.items.length === 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="sm:col-span-1">
+                    <Label htmlFor={`cost_${index}`}>Cost</Label>
+                    <Input
+                      id={`cost_${index}`}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={item.cost_price}
+                      onChange={(e) => handleItemChange(index, "cost_price", Number.parseFloat(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <div className="sm:col-span-1">
+                    <Label htmlFor={`price_${index}`}>Price</Label>
+                    <Input
+                      id={`price_${index}`}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={item.unit_price}
+                      onChange={(e) => handleItemChange(index, "unit_price", Number.parseFloat(e.target.value))}
+                      required
+                    />
+                  </div>
+                  <div className="flex items-end sm:col-span-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="ml-auto"
+                      onClick={() => removeItem(index)}
+                      disabled={formData.items.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -298,10 +472,28 @@ export default function NewQuotePage() {
                 Add Item
               </Button>
 
-              <div className="mt-4 flex justify-end">
-                <div className="text-right">
-                  <p className="text-sm font-medium">Total Amount</p>
-                  <p className="text-2xl font-bold">${calculateTotal().toFixed(2)}</p>
+              <div className="mt-4 rounded-lg border p-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span>${calculateSubtotal().toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Cost:</span>
+                    <span>${calculateCostTotal().toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Profit:</span>
+                    <span>${calculateProfit().toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>Profit Margin:</span>
+                    <span>{calculateProfitMargin().toFixed(2)}%</span>
+                  </div>
+                  <div className="border-t pt-2 mt-2 flex justify-between font-bold">
+                    <span>Total:</span>
+                    <span>${calculateSubtotal().toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             </CardContent>

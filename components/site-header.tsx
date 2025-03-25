@@ -1,25 +1,35 @@
+"use client"
+
 import Link from "next/link"
 import { UserNav } from "@/components/user-nav"
 import { ModeToggle } from "@/components/mode-toggle"
-import { createServerComponentClient } from "@/lib/supabase"
+import { createClientComponentClient } from "@/lib/supabase"
+import { useEffect, useState } from "react"
 
-export async function SiteHeader() {
-  let user = null
+export function SiteHeader() {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClientComponentClient()
 
-  try {
-    const supabase = createServerComponentClient()
-    const { data } = await supabase.auth.getSession()
-
-    if (data?.session?.user) {
-      user = {
-        email: data.session.user.email || "user@example.com",
-        name: data.session.user.user_metadata?.name || "",
+  useEffect(() => {
+    async function getUser() {
+      try {
+        const { data } = await supabase.auth.getUser()
+        if (data?.user) {
+          setUser({
+            email: data.user.email || "",
+            name: data.user.user_metadata?.name || "",
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error)
+      } finally {
+        setLoading(false)
       }
     }
-  } catch (error) {
-    console.error("Error fetching user session:", error)
-    // If there's an error, we'll just render without the user nav
-  }
+
+    getUser()
+  }, [supabase])
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
@@ -29,7 +39,7 @@ export async function SiteHeader() {
         </Link>
         <div className="flex items-center space-x-4">
           <ModeToggle />
-          {user && <UserNav user={user} />}
+          {!loading && user && <UserNav user={user} />}
         </div>
       </div>
     </header>

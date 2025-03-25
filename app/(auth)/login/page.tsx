@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -19,7 +18,6 @@ const formSchema = z.object({
 })
 
 export default function LoginPage() {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const supabase = createClientComponentClient()
 
@@ -46,7 +44,7 @@ export default function LoginPage() {
 
       toast.success("Logged in successfully")
 
-      // Use window.location for a hard navigation
+      // The middleware will handle the redirect
       window.location.href = "/dashboard"
     } catch (error: any) {
       toast.error(error.message || "Failed to login")

@@ -1,27 +1,12 @@
 import type React from "react"
-import { redirect } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { MainNav } from "@/components/main-nav"
-import { createServerComponentClient } from "@/lib/supabase"
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  try {
-    const supabase = createServerComponentClient()
-    const { data, error } = await supabase.auth.getSession()
-
-    // If there's an error or no session, redirect to login
-    if (error || !data?.session) {
-      redirect("/login")
-    }
-  } catch (error) {
-    console.error("Error checking session:", error)
-    redirect("/login")
-  }
-
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />

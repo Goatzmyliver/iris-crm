@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,7 +22,6 @@ interface UserNavProps {
 }
 
 export function UserNav({ user }: UserNavProps) {
-  const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const supabase = createClientComponentClient()
 
@@ -70,7 +68,7 @@ export function UserNav({ user }: UserNavProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/settings")}>Settings</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => (window.location.href = "/settings")}>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled={isLoggingOut} onClick={handleSignOut}>
           {isLoggingOut ? "Signing out..." : "Sign out"}

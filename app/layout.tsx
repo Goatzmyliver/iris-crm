@@ -1,20 +1,20 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type { ReactNode } from "react"
+import { Sidebar } from "@/components/sidebar"
+import { Header } from "@/components/header"
 
-export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
-}
-
-export default function RootLayout({
+export default function DashboardLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: ReactNode
+}) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <div className="flex flex-1">
+        <Sidebar className="hidden md:block" />
+        <main className="flex-1 p-4 md:p-6">{children}</main>
+      </div>
+    </div>
   )
 }
+

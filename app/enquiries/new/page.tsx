@@ -1,13 +1,9 @@
-import { EnquiryForm } from "@/components/enquiry-form"
+import EnquiryForm from "@/components/enquiry-form"
 
-export const metadata = {
-  title: "New Enquiry | Iris CRM",
-}
-
-export default function NewEnquiryPage() {
+export default async function NewEnquiryPage() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">New Enquiry</h1>
+    <div className="container py-10 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Create New Enquiry</h1>
       <EnquiryForm />
     </div>
   )

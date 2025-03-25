@@ -1,23 +1,66 @@
+"use client"
+
 import type React from "react"
-import { SiteHeader } from "@/components/site-header"
-import { MainNav } from "@/components/main-nav"
+
+import { useEffect, useState } from "react"
+import { createClientComponentClient } from "@supabase/supabase-js"
+import { Loader2 } from "lucide-react"
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <div className="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10">
-        <aside className="fixed top-14 z-30 -ml-2 hidden h-[calc(100vh-3.5rem)] w-full shrink-0 md:sticky md:block">
-          <div className="relative h-full py-6 pr-6">
-            <MainNav />
-          </div>
-        </aside>
-        <main className="flex w-full flex-col overflow-hidden py-6">{children}</main>
+  const [loading, setLoading] = useState(true)
+
+  // Create a fresh Supabase client for this component
+  const supabase = createClientComponentClient({
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  })
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+
+        if (error) {
+          throw error
+        }
+
+        if (!data.session) {
+          // If no session is found, redirect to login
+          window.location.href = "/login"
+          return
+        }
+
+        setLoading(false)
+      } catch (error) {
+        console.error("Error checking auth:", error)
+        // On error, redirect to login
+        window.location.href = "/login"
+      }
+    }
+
+    checkAuth()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow">
+        <div className="container mx-auto px-4 py-4">
+          <h1 className="text-xl font-bold text-gray-900">IRIS CRM</h1>
+        </div>
+      </header>
+      <main>{children}</main>
     </div>
   )
 }

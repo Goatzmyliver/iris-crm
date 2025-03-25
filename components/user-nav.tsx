@@ -15,15 +15,23 @@ import {
 import { createClientComponentClient } from "@/lib/supabase"
 import { toast } from "sonner"
 
-export function UserNav({ user }: { user: { email: string; name?: string } }) {
+interface UserNavProps {
+  user: {
+    email: string
+    name?: string
+  }
+}
+
+export function UserNav({ user }: UserNavProps) {
   const router = useRouter()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const supabase = createClientComponentClient()
 
+  // Safely get initials, handling potential undefined values
   const initials = user.name
     ? user.name
         .split(" ")
-        .map((n) => n[0])
+        .map((n) => n[0] || "")
         .join("")
         .toUpperCase()
     : user.email.substring(0, 2).toUpperCase()
@@ -33,8 +41,9 @@ export function UserNav({ user }: { user: { email: string; name?: string } }) {
       setIsLoggingOut(true)
       await supabase.auth.signOut()
       toast.success("Signed out successfully")
-      router.push("/login")
-      router.refresh()
+
+      // Use window.location for a hard redirect
+      window.location.href = "/login"
     } catch (error) {
       toast.error("Error signing out")
       console.error(error)

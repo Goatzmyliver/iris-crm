@@ -5,16 +5,16 @@ import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 
 interface Enquiry {
-  id: number
-  name: string
-  email: string | null
-  enquiry_type: string
-  status: string
+  id: string | number
+  name?: string
+  email?: string | null
+  enquiry_type?: string
+  status?: string
   created_at: string
 }
 
-export default function RecentEnquiries({ enquiries }: { enquiries: Enquiry[] }) {
-  const getStatusColor = (status: string) => {
+export default function RecentEnquiries({ enquiries = [] }: { enquiries?: Enquiry[] }) {
+  const getStatusColor = (status = "new") => {
     switch (status) {
       case "new":
         return "bg-blue-500"
@@ -55,7 +55,7 @@ export default function RecentEnquiries({ enquiries }: { enquiries: Enquiry[] })
               <div key={enquiry.id} className="flex items-center">
                 <div className="ml-4 space-y-1">
                   <Link href={`/enquiries/${enquiry.id}`} className="text-sm font-medium leading-none hover:underline">
-                    {enquiry.name} - {enquiry.enquiry_type}
+                    {enquiry.name || "Unknown"} - {enquiry.enquiry_type || "General"}
                   </Link>
                   <p className="text-sm text-muted-foreground">{enquiry.email || "No email provided"}</p>
                   <div className="flex items-center pt-2">
@@ -67,7 +67,7 @@ export default function RecentEnquiries({ enquiries }: { enquiries: Enquiry[] })
                 </div>
                 <div className="ml-auto">
                   <Badge className={getStatusColor(enquiry.status)}>
-                    {enquiry.status.charAt(0).toUpperCase() + enquiry.status.slice(1)}
+                    {(enquiry.status || "new").charAt(0).toUpperCase() + (enquiry.status || "new").slice(1)}
                   </Badge>
                 </div>
               </div>

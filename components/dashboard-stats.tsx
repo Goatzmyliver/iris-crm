@@ -2,15 +2,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, FileText, DollarSign, Briefcase } from "lucide-react"
 
 interface StatsProps {
-  stats: {
-    customersCount: number
-    activeEnquiries: number
-    quotesValue: number
-    jobsCount: number
+  stats?: {
+    customersCount?: number
+    activeEnquiries?: number
+    quotesValue?: number
+    jobsCount?: number
   }
 }
 
-export default function DashboardStats({ stats }: StatsProps) {
+export default function DashboardStats({ stats = {} }: StatsProps) {
+  const { customersCount = 0, activeEnquiries = 0, quotesValue = 0, jobsCount = 0 } = stats
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <Card>
@@ -19,7 +21,7 @@ export default function DashboardStats({ stats }: StatsProps) {
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.customersCount}</div>
+          <div className="text-2xl font-bold">{customersCount}</div>
           <p className="text-xs text-muted-foreground">+0% from last month</p>
         </CardContent>
       </Card>
@@ -30,7 +32,7 @@ export default function DashboardStats({ stats }: StatsProps) {
           <FileText className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.activeEnquiries}</div>
+          <div className="text-2xl font-bold">{activeEnquiries}</div>
           <p className="text-xs text-muted-foreground">+0% from last month</p>
         </CardContent>
       </Card>
@@ -41,7 +43,7 @@ export default function DashboardStats({ stats }: StatsProps) {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${stats.quotesValue.toLocaleString()}</div>
+          <div className="text-2xl font-bold">${quotesValue.toLocaleString()}</div>
           <p className="text-xs text-muted-foreground">+0% from last month</p>
         </CardContent>
       </Card>
@@ -52,7 +54,7 @@ export default function DashboardStats({ stats }: StatsProps) {
           <Briefcase className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.jobsCount}</div>
+          <div className="text-2xl font-bold">{jobsCount}</div>
           <p className="text-xs text-muted-foreground">+0% from last month</p>
         </CardContent>
       </Card>

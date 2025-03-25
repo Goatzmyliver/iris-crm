@@ -5,15 +5,15 @@ import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 
 interface Customer {
-  id: number
-  name: string
-  email: string | null
-  phone: string
-  stage: string | null
+  id: string | number
+  name?: string
+  email?: string | null
+  phone?: string
+  stage?: string | null
   created_at: string
 }
 
-export default function RecentCustomers({ customers }: { customers: Customer[] }) {
+export default function RecentCustomers({ customers = [] }: { customers?: Customer[] }) {
   const getStageColor = (stage: string | null) => {
     switch (stage) {
       case "lead":
@@ -59,20 +59,24 @@ export default function RecentCustomers({ customers }: { customers: Customer[] }
             customers.map((customer) => (
               <div key={customer.id} className="flex items-center">
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src="/placeholder.svg" alt={customer.name} />
+                  <AvatarImage src="/placeholder.svg" alt={customer.name || "Customer"} />
                   <AvatarFallback>
                     {customer.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()}
+                      ? customer.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .toUpperCase()
+                      : "?"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="ml-4 space-y-1">
                   <Link href={`/customers/${customer.id}`} className="text-sm font-medium leading-none hover:underline">
-                    {customer.name}
+                    {customer.name || "Unknown Customer"}
                   </Link>
-                  <p className="text-sm text-muted-foreground">{customer.email || customer.phone}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {customer.email || customer.phone || "No contact info"}
+                  </p>
                 </div>
                 <div className="ml-auto">
                   {customer.stage ? (

@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   let query = supabase.from("products").select("*")
 
   if (search) {
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,sku.ilike.%${search}%`)
+    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
   }
 
   const { data: products, error } = await query.order("name")

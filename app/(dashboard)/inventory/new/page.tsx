@@ -20,15 +20,14 @@ export default function NewProductPage() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    sku: "",
     price: "",
     cost: "",
     stock_level: "0",
     low_stock_threshold: "5",
     unit: "m²",
-    supplier_id: "",
     supplier_name: "",
-    supplier_sku: "",
+    supplier_contact: "",
+    notes: "",
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -99,16 +98,6 @@ export default function NewProductPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="sku">SKU</Label>
-                <Input id="sku" name="sku" value={formData.sku} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="unit">Unit</Label>
-                <Input id="unit" name="unit" value={formData.unit} onChange={handleChange} required />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
                 <Label htmlFor="price">Selling Price</Label>
                 <Input
                   id="price"
@@ -162,18 +151,32 @@ export default function NewProductPage() {
               </div>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="unit">Unit</Label>
+              <Input id="unit" name="unit" value={formData.unit} onChange={handleChange} required />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="supplier_name">Supplier Name</Label>
               <Input id="supplier_name" name="supplier_name" value={formData.supplier_name} onChange={handleChange} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="supplier_sku">Supplier SKU</Label>
-                <Input id="supplier_sku" name="supplier_sku" value={formData.supplier_sku} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="supplier_id">Supplier ID</Label>
-                <Input id="supplier_id" name="supplier_id" value={formData.supplier_id} onChange={handleChange} />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="supplier_contact">Supplier Contact</Label>
+              <Input
+                id="supplier_contact"
+                name="supplier_contact"
+                value={formData.supplier_contact}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Additional Notes</Label>
+              <Textarea
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Any other relevant information about this product"
+              />
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">

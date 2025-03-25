@@ -71,7 +71,7 @@ export default function InventoryPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle>{product.name}</CardTitle>
-                      <CardDescription>{product.sku}</CardDescription>
+                      <CardDescription>{product.description}</CardDescription>
                     </div>
                     <div>
                       <span

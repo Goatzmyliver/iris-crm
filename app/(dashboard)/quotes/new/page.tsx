@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { Plus, Trash2, Calculator, FileText } from "lucide-react"
 
@@ -30,7 +29,6 @@ export default function NewQuotePage() {
   const [products, setProducts] = useState<any[]>([])
   const [showItemBreakdown, setShowItemBreakdown] = useState(true)
   const [markupPercentage, setMarkupPercentage] = useState(30)
-  const [activeTab, setActiveTab] = useState<"product" | "custom">("product")
 
   const [formData, setFormData] = useState({
     customer_id: "",
@@ -38,7 +36,16 @@ export default function NewQuotePage() {
     expiry_date: "",
     notes: "",
     status: "draft",
-    items: [{ product_id: "", description: "", quantity: 1, unit_price: 0, cost_price: 0 }],
+    items: [
+      {
+        product_id: "",
+        description: "",
+        quantity: 1,
+        unit_price: 0,
+        cost_price: 0,
+        type: "product" as "product" | "custom",
+      },
+    ],
   })
 
   useEffect(() => {
@@ -179,7 +186,10 @@ export default function NewQuotePage() {
   const addItem = () => {
     setFormData((prev) => ({
       ...prev,
-      items: [...prev.items, { product_id: "", description: "", quantity: 1, unit_price: 0, cost_price: 0 }],
+      items: [
+        ...prev.items,
+        { product_id: "", description: "", quantity: 1, unit_price: 0, cost_price: 0, type: "product" },
+      ],
     }))
   }
 
@@ -199,6 +209,13 @@ export default function NewQuotePage() {
 
   const calculateProfit = () => {
     return calculateSubtotal() - calculateCostTotal()
+  }
+
+  const calculateTotalMarkup = () => {
+    return formData.items.reduce((total, item) => {
+      const itemMarkup = item.unit_price - item.cost_price
+      return total + itemMarkup * item.quantity
+    }, 0)
   }
 
   const calculateProfitMargin = () => {
@@ -283,8 +300,14 @@ export default function NewQuotePage() {
     )
   }
 
+  const toggleItemType = (index: number, type: "product" | "custom") => {
+    const updatedItems = [...formData.items]
+    updatedItems[index] = { ...updatedItems[index], type }
+    setFormData((prev) => ({ ...prev, items: updatedItems }))
+  }
+
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-5xl">
       <h2 className="mb-6 text-3xl font-bold tracking-tight">New Quote</h2>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6">
@@ -367,102 +390,119 @@ export default function NewQuotePage() {
               <CardDescription>Add products and services to the quote</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <Tabs value={activeTab} onValueChange={(value: "product" | "custom") => setActiveTab(value)}>
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="product">Select from Products</TabsTrigger>
-                  <TabsTrigger value="custom">Custom Item</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-2 w-[40%]">Description</th>
+                      <th className="text-right py-2 px-2 w-[12%]">Quantity</th>
+                      <th className="text-right py-2 px-2 w-[12%]">Cost</th>
+                      <th className="text-right py-2 px-2 w-[12%]">Price</th>
+                      <th className="text-right py-2 px-2 w-[16%]">Total</th>
+                      <th className="text-right py-2 px-2 w-[8%]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.items.map((item, index) => (
+                      <tr key={index} className="border-b">
+                        <td className="py-2 px-2">
+                          <div className="flex flex-col gap-2">
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                className={`px-2 py-1 text-xs rounded-l-md ${item.type === "product" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                                onClick={() => toggleItemType(index, "product")}
+                              >
+                                Product
+                              </button>
+                              <button
+                                type="button"
+                                className={`px-2 py-1 text-xs rounded-r-md ${item.type === "custom" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+                                onClick={() => toggleItemType(index, "custom")}
+                              >
+                                Custom
+                              </button>
+                            </div>
 
-              {formData.items.map((item, index) => (
-                <div key={index} className="grid gap-4 rounded-lg border p-4">
-                  <div className="grid gap-4 sm:grid-cols-12">
-                    {activeTab === "product" ? (
-                      <div className="sm:col-span-5">
-                        <Label htmlFor={`product_${index}`}>Product</Label>
-                        <Select
-                          value={item.product_id}
-                          onValueChange={(value) => handleItemChange(index, "product_id", value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select product" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {products.map((product) => (
-                              <SelectItem key={product.id} value={product.id}>
-                                {product.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ) : null}
+                            {item.type === "product" ? (
+                              <Select
+                                value={item.product_id}
+                                onValueChange={(value) => handleItemChange(index, "product_id", value)}
+                              >
+                                <SelectTrigger className="h-8 text-sm">
+                                  <SelectValue placeholder="Select product" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {products.map((product) => (
+                                    <SelectItem key={product.id} value={product.id}>
+                                      {product.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : null}
 
-                    <div className={activeTab === "product" ? "sm:col-span-7" : "sm:col-span-12"}>
-                      <Label htmlFor={`description_${index}`}>Description</Label>
-                      <Input
-                        id={`description_${index}`}
-                        value={item.description}
-                        onChange={(e) => handleItemChange(index, "description", e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-12">
-                    <div className="sm:col-span-3">
-                      <Label htmlFor={`quantity_${index}`}>Quantity</Label>
-                      <Input
-                        id={`quantity_${index}`}
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(index, "quantity", Number.parseInt(e.target.value))}
-                        required
-                      />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <Label htmlFor={`cost_${index}`}>Cost Price</Label>
-                      <Input
-                        id={`cost_${index}`}
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={item.cost_price}
-                        onChange={(e) => handleItemChange(index, "cost_price", Number.parseFloat(e.target.value))}
-                        required
-                      />
-                    </div>
-                    <div className="sm:col-span-3">
-                      <Label htmlFor={`price_${index}`}>Selling Price</Label>
-                      <Input
-                        id={`price_${index}`}
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={item.unit_price}
-                        onChange={(e) => handleItemChange(index, "unit_price", Number.parseFloat(e.target.value))}
-                        required
-                      />
-                    </div>
-                    <div className="sm:col-span-3 flex items-end">
-                      <div className="w-full text-right font-medium pt-2">
-                        ${(item.quantity * item.unit_price).toFixed(2)}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="ml-2"
-                        onClick={() => removeItem(index)}
-                        disabled={formData.items.length === 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                            <Input
+                              value={item.description}
+                              onChange={(e) => handleItemChange(index, "description", e.target.value)}
+                              className="h-8 text-sm"
+                              placeholder="Description"
+                              required
+                            />
+                          </div>
+                        </td>
+                        <td className="py-2 px-2">
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => handleItemChange(index, "quantity", Number.parseInt(e.target.value))}
+                            className="h-8 text-sm text-right"
+                            required
+                          />
+                        </td>
+                        <td className="py-2 px-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={item.cost_price}
+                            onChange={(e) => handleItemChange(index, "cost_price", Number.parseFloat(e.target.value))}
+                            className="h-8 text-sm text-right"
+                            required
+                          />
+                        </td>
+                        <td className="py-2 px-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={item.unit_price}
+                            onChange={(e) => handleItemChange(index, "unit_price", Number.parseFloat(e.target.value))}
+                            className="h-8 text-sm text-right"
+                            required
+                          />
+                        </td>
+                        <td className="py-2 px-2 text-right font-medium">
+                          ${(item.quantity * item.unit_price).toFixed(2)}
+                        </td>
+                        <td className="py-2 px-2 text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => removeItem(index)}
+                            disabled={formData.items.length === 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               <Button type="button" variant="outline" size="sm" className="mt-2" onClick={addItem}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -479,6 +519,10 @@ export default function NewQuotePage() {
                     <div className="flex justify-between text-sm">
                       <span>Cost:</span>
                       <span className="font-medium">${calculateCostTotal().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Total Markup:</span>
+                      <span className="font-medium">${calculateTotalMarkup().toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Profit:</span>
@@ -512,6 +556,9 @@ export default function NewQuotePage() {
                           onChange={(e) => setMarkupPercentage(Number(e.target.value))}
                         />
                         <span className="text-lg font-medium">%</span>
+                      </div>
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        Total markup amount: <span className="font-medium">${calculateTotalMarkup().toFixed(2)}</span>
                       </div>
                     </div>
                     <Button type="button" variant="secondary" className="w-full" onClick={recalculateAllPrices}>

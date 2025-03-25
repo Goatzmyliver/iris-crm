@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js"
-import { cookies } from "next/headers"
 
 // Create a single supabase client for interacting with your database
 export const createClientComponentClient = () => {
@@ -12,18 +11,12 @@ export const createClientComponentClient = () => {
 }
 
 export const createServerComponentClient = () => {
-  const cookieStore = cookies()
-
+  // For server components, we don't use cookies directly
+  // This approach works with both App Router and Pages Router
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || "", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "", {
     auth: {
       persistSession: true,
       storageKey: "iris-crm-auth",
-      // Use cookies for server components
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value
-        },
-      },
     },
   })
 }

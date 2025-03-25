@@ -9,11 +9,16 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createServerComponentClient()
-  const { data, error } = await supabase.auth.getSession()
+  try {
+    const supabase = createServerComponentClient()
+    const { data } = await supabase.auth.getSession()
 
-  // If there's an error or no session, redirect to login
-  if (error || !data.session) {
+    // If there's no session, redirect to login
+    if (!data.session) {
+      redirect("/login")
+    }
+  } catch (error) {
+    console.error("Error checking session:", error)
     redirect("/login")
   }
 

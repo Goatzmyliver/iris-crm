@@ -4,15 +4,21 @@ import { ModeToggle } from "@/components/mode-toggle"
 import { createServerComponentClient } from "@/lib/supabase"
 
 export async function SiteHeader() {
-  const supabase = createServerComponentClient()
-  const { data } = await supabase.auth.getSession()
+  let user = null
 
-  const user = data.session?.user
-    ? {
-        email: data.session.user.email || "",
-        name: data.session.user.user_metadata?.name || "",
-      }
-    : null
+  try {
+    const supabase = createServerComponentClient()
+    const { data } = await supabase.auth.getSession()
+
+    user = data.session?.user
+      ? {
+          email: data.session.user.email || "",
+          name: data.session.user.user_metadata?.name || "",
+        }
+      : null
+  } catch (error) {
+    console.error("Error fetching user session:", error)
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">

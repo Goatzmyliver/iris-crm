@@ -4,10 +4,10 @@ import { createServerComponentClient } from "@/lib/supabase"
 export default async function HomePage() {
   try {
     const supabase = createServerComponentClient()
-    const { data, error } = await supabase.auth.getSession()
+    const { data } = await supabase.auth.getSession()
 
     // If user is logged in, redirect to dashboard
-    if (data.session && !error) {
+    if (data.session) {
       redirect("/dashboard")
     }
   } catch (error) {

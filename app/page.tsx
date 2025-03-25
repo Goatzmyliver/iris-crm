@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation"
+"use client"
 
-export default function Home() {
-  redirect("/login")
-  return null
+import DashboardStats from "../components/dashboard-stats"
+
+export default function SyntheticV0PageForDeployment() {
+  return <DashboardStats />
 }
-

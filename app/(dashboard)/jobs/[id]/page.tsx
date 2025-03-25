@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Pencil, Camera } from "lucide-react"
 import { UpdateJobStatus } from "@/components/update-job-status"
+import { JobProgressTracker } from "@/components/job-progress-tracker"
+import { JobScheduler } from "@/components/job-scheduler"
+import { JobUpdateHistory } from "@/components/job-update-history"
+import { JobNeedsSchedulingAlert } from "@/components/job-needs-scheduling-alert"
 
 export default async function JobDetailPage({
   params,
@@ -16,7 +20,11 @@ export default async function JobDetailPage({
   const { id } = params
 
   // Fetch job details
-  const { data: job, error } = await supabase.from("jobs").select("*, customers(*), quotes(*)").eq("id", id).single()
+  const { data: job, error } = await supabase
+    .from("jobs")
+    .select("*, customers(*), quotes(*), progress_percentage, progress_notes, completion_notes, completion_date")
+    .eq("id", id)
+    .single()
 
   if (error || !job) {
     notFound()
@@ -32,8 +40,13 @@ export default async function JobDetailPage({
     .eq("job_id", id)
     .order("created_at", { ascending: false })
 
+  // Fetch installers for the scheduler
+  const { data: installers } = await supabase.from("profiles").select("id, full_name").eq("role", "installer")
+
   return (
     <div className="space-y-6">
+      <JobNeedsSchedulingAlert job={job} installers={installers || []} />
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Job #{job.id}</h2>
@@ -130,6 +143,8 @@ export default async function JobDetailPage({
                   </table>
                 </div>
               )}
+
+              <JobUpdateHistory jobId={job.id} />
             </div>
           </CardContent>
         </Card>
@@ -160,6 +175,10 @@ export default async function JobDetailPage({
               </Button>
             </CardFooter>
           </Card>
+
+          <JobProgressTracker job={job} />
+
+          <JobScheduler job={job} installers={installers || []} />
 
           {job.quote_id && (
             <Card>

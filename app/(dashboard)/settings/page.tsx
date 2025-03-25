@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
+import Link from "next/link"
 
 export default function SettingsPage() {
   const supabase = createClientComponentClient()
@@ -61,10 +62,11 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="company">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="backup">Backup</TabsTrigger>
+          <TabsTrigger value="development">Development</TabsTrigger>
         </TabsList>
         <TabsContent value="company" className="space-y-4">
           <Card>
@@ -143,6 +145,25 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">Backup configuration will be implemented here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="development" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Development Tools</CardTitle>
+              <CardDescription>Tools for development and testing</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Database Seed Tool</h3>
+                <p className="text-sm text-muted-foreground">
+                  Populate the database with sample data for testing and demonstration purposes.
+                </p>
+                <Button asChild>
+                  <Link href="/admin/seed">Open Seed Tool</Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

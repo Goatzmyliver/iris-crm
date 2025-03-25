@@ -4,7 +4,8 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Pencil, Send, FileText, Calendar, ArrowRight } from "lucide-react"
+import { Pencil, Send, FileText, ArrowRight } from "lucide-react"
+import { ConvertQuoteToJob } from "@/components/convert-quote-to-job"
 
 export default async function QuoteDetailPage({
   params,
@@ -27,6 +28,9 @@ export default async function QuoteDetailPage({
 
   // Fetch quote items
   const { data: items } = await supabase.from("quote_items").select("*, products(name)").eq("quote_id", id).order("id")
+
+  // Check if a job already exists for this quote
+  const { data: existingJob } = await supabase.from("jobs").select("id").eq("quote_id", id).maybeSingle()
 
   return (
     <div className="space-y-6">
@@ -54,13 +58,15 @@ export default async function QuoteDetailPage({
               PDF
             </Link>
           </Button>
-          {quote.status === "approved" && (
+          {existingJob ? (
             <Button asChild>
-              <Link href={`/quotes/${id}/convert`}>
-                <Calendar className="mr-2 h-4 w-4" />
-                Convert to Job
+              <Link href={`/jobs/${existingJob.id}`}>
+                <ArrowRight className="mr-2 h-4 w-4" />
+                View Job
               </Link>
             </Button>
+          ) : (
+            <ConvertQuoteToJob quote={quote} />
           )}
         </div>
       </div>

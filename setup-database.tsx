@@ -140,16 +140,15 @@ export default function SetupDatabase() {
 CREATE OR REPLACE FUNCTION create_customers_table()
 RETURNS void AS $$
 BEGIN
-CREATE TABLE IF NOT EXISTS customers (
-  id SERIAL PRIMARY KEY,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  name TEXT NOT NULL,
-  email TEXT,
-  phone TEXT NOT NULL,
-  address TEXT,
-  notes TEXT,
-  assigned_user_id UUID REFERENCES auth.users(id)
-);
+  CREATE TABLE IF NOT EXISTS customers (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT NOT NULL,
+    address TEXT,
+    notes TEXT
+  );
 END;
 $$ LANGUAGE plpgsql;
 
@@ -157,15 +156,14 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION create_quotes_table()
 RETURNS void AS $$
 BEGIN
-CREATE TABLE IF NOT EXISTS quotes (
-  id TEXT PRIMARY KEY,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  customer_id INTEGER NOT NULL REFERENCES customers(id),
-  status TEXT NOT NULL DEFAULT 'draft',
-  total DECIMAL(10, 2) NOT NULL DEFAULT 0,
-  notes TEXT,
-  assigned_user_id UUID REFERENCES auth.users(id)
-);
+  CREATE TABLE IF NOT EXISTS quotes (
+    id TEXT PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    customer_id INTEGER NOT NULL REFERENCES customers(id),
+    status TEXT NOT NULL DEFAULT 'draft',
+    total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    notes TEXT
+  );
 END;
 $$ LANGUAGE plpgsql;
 
@@ -173,15 +171,15 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION create_quote_items_table()
 RETURNS void AS $$
 BEGIN
-CREATE TABLE IF NOT EXISTS quote_items (
-  id SERIAL PRIMARY KEY,
-  quote_id TEXT NOT NULL REFERENCES quotes(id),
-  description TEXT NOT NULL,
-  quantity INTEGER NOT NULL DEFAULT 1,
-  cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
-  markup DECIMAL(10, 2) NOT NULL DEFAULT 0,
-  total DECIMAL(10, 2) NOT NULL DEFAULT 0
-);
+  CREATE TABLE IF NOT EXISTS quote_items (
+    id SERIAL PRIMARY KEY,
+    quote_id TEXT NOT NULL REFERENCES quotes(id),
+    description TEXT NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    markup DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    total DECIMAL(10, 2) NOT NULL DEFAULT 0
+  );
 END;
 $$ LANGUAGE plpgsql;
 
@@ -189,17 +187,16 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION create_jobs_table()
 RETURNS void AS $$
 BEGIN
-CREATE TABLE IF NOT EXISTS jobs (
-  id TEXT PRIMARY KEY,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  quote_id TEXT REFERENCES quotes(id),
-  customer_id INTEGER NOT NULL REFERENCES customers(id),
-  status TEXT NOT NULL DEFAULT 'scheduled',
-  scheduled_date DATE,
-  completed_date DATE,
-  notes TEXT,
-  assigned_user_id UUID REFERENCES auth.users(id)
-);
+  CREATE TABLE IF NOT EXISTS jobs (
+    id TEXT PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    quote_id TEXT REFERENCES quotes(id),
+    customer_id INTEGER NOT NULL REFERENCES customers(id),
+    status TEXT NOT NULL DEFAULT 'scheduled',
+    scheduled_date DATE,
+    completed_date DATE,
+    notes TEXT
+  );
 END;
 $$ LANGUAGE plpgsql;
 
@@ -207,17 +204,17 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION create_inventory_items_table()
 RETURNS void AS $$
 BEGIN
-CREATE TABLE IF NOT EXISTS inventory_items (
-  id SERIAL PRIMARY KEY,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  name TEXT NOT NULL,
-  description TEXT,
-  category TEXT NOT NULL,
-  cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
-  sell_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
-  stock_level INTEGER NOT NULL DEFAULT 0,
-  supplier_id INTEGER REFERENCES suppliers(id)
-);
+  CREATE TABLE IF NOT EXISTS inventory_items (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    name TEXT NOT NULL,
+    description TEXT,
+    category TEXT NOT NULL,
+    cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    sell_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    stock_level INTEGER NOT NULL DEFAULT 0,
+    supplier_id INTEGER REFERENCES suppliers(id)
+  );
 END;
 $$ LANGUAGE plpgsql;
 
@@ -225,51 +222,16 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION create_suppliers_table()
 RETURNS void AS $$
 BEGIN
-CREATE TABLE IF NOT EXISTS suppliers (
-  id SERIAL PRIMARY KEY,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  name TEXT NOT NULL,
-  contact_name TEXT,
-  email TEXT,
-  phone TEXT NOT NULL,
-  address TEXT,
-  notes TEXT
-);
-END;
-$$ LANGUAGE plpgsql;
-
--- Users table (for storing additional user info)
-CREATE OR REPLACE FUNCTION create_users_table()
-RETURNS void AS $$
-BEGIN
-CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  email TEXT NOT NULL,
-  name TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'user'
-);
-END;
-$$ LANGUAGE plpgsql;
-
--- Enquiries table
-CREATE OR REPLACE FUNCTION create_enquiries_table()
-RETURNS void AS $$
-BEGIN
-CREATE TABLE IF NOT EXISTS enquiries (
-  id SERIAL PRIMARY KEY,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  name TEXT NOT NULL,
-  email TEXT,
-  phone TEXT NOT NULL,
-  address TEXT,
-  enquiry_type TEXT NOT NULL,
-  description TEXT,
-  source TEXT,
-  status TEXT NOT NULL DEFAULT 'new',
-  assigned_user_id UUID REFERENCES auth.users(id),
-  notes TEXT
-);
+  CREATE TABLE IF NOT EXISTS suppliers (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    name TEXT NOT NULL,
+    contact_name TEXT,
+    email TEXT,
+    phone TEXT NOT NULL,
+    address TEXT,
+    notes TEXT
+  );
 END;
 $$ LANGUAGE plpgsql;`}
               </pre>

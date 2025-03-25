@@ -11,10 +11,10 @@ export default async function DashboardLayout({
 }) {
   try {
     const supabase = createServerComponentClient()
-    const { data } = await supabase.auth.getSession()
+    const { data, error } = await supabase.auth.getSession()
 
-    // If there's no session, redirect to login
-    if (!data.session) {
+    // If there's an error or no session, redirect to login
+    if (error || !data?.session) {
       redirect("/login")
     }
   } catch (error) {

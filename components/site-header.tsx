@@ -10,14 +10,15 @@ export async function SiteHeader() {
     const supabase = createServerComponentClient()
     const { data } = await supabase.auth.getSession()
 
-    user = data.session?.user
-      ? {
-          email: data.session.user.email || "",
-          name: data.session.user.user_metadata?.name || "",
-        }
-      : null
+    if (data?.session?.user) {
+      user = {
+        email: data.session.user.email || "user@example.com",
+        name: data.session.user.user_metadata?.name || "",
+      }
+    }
   } catch (error) {
     console.error("Error fetching user session:", error)
+    // If there's an error, we'll just render without the user nav
   }
 
   return (

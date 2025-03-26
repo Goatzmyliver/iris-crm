@@ -59,7 +59,8 @@ export function JobCompletionForm({ jobId, installerId, onComplete, onCancel }: 
 
       if (photos.length > 0) {
         for (const photo of photos) {
-          const fileName = `job-${jobId}-${Date.now()}-${photo.name}`
+          // Create a folder structure with installer ID to enforce access control
+          const fileName = `${installerId}/${jobId}-${Date.now()}-${photo.name.replace(/\s+/g, "-")}`
           const { error: uploadError } = await supabase.storage.from("job-photos").upload(fileName, photo)
 
           if (uploadError) throw uploadError

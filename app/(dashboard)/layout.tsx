@@ -48,7 +48,7 @@ export default async function DashboardLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <div className="flex min-h-screen flex-col">
             <DashboardHeader user={user} />
-            <div className="flex flex-1">
+            <div className="flex flex-1 overflow-hidden">
               <DashboardSidebar userRole={user.role} />
               <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
             </div>

@@ -68,7 +68,10 @@ export function MainNav({ userRole }: { userRole: string }) {
     },
   ]
 
+  // Make sure we're filtering based on the user role
+  console.log("User role:", userRole)
   const filteredNavItems = navItems.filter((item) => item.roles.includes(userRole))
+  console.log("Filtered nav items:", filteredNavItems)
 
   return (
     <nav className="flex flex-col space-y-1">

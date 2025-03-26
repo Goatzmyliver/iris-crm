@@ -13,8 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, X } from "lucide-react"
-import { MainNav } from "@/components/main-nav"
 
 interface DashboardHeaderProps {
   user: {
@@ -30,7 +28,6 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   const router = useRouter()
   const supabase = createClientComponentClient()
   const [isLoading, setIsLoading] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
     setIsLoading(true)
@@ -52,15 +49,6 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden mr-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle menu</span>
-          </Button>
           <h1 className="text-xl font-bold">Iris CRM</h1>
         </div>
         <DropdownMenu>
@@ -88,20 +76,6 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden">
-          <div className="fixed inset-y-0 left-0 z-50 w-3/4 max-w-xs bg-background p-4 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Menu</h2>
-              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
-                <X className="h-5 w-5" />
-                <span className="sr-only">Close</span>
-              </Button>
-            </div>
-            <MainNav userRole={user.role} />
-          </div>
-        </div>
-      )}
     </header>
   )
 }

@@ -5,7 +5,7 @@ import type React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { BarChart3, Calendar, ClipboardList, Home, Package, Settings, Users } from "lucide-react"
+import { BarChart3, Calendar, ClipboardList, Home, Package, Settings, Users, Wrench } from "lucide-react"
 
 interface NavItem {
   title: string
@@ -52,6 +52,12 @@ export function MainNav({ userRole }: { userRole: string }) {
       title: "Reports",
       href: "/reports",
       icon: <BarChart3 className="h-5 w-5" />,
+      roles: ["admin"],
+    },
+    {
+      title: "Installer Portal",
+      href: "/installer",
+      icon: <Wrench className="h-5 w-5" />,
       roles: ["admin"],
     },
     {

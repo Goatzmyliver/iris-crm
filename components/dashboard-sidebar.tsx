@@ -4,11 +4,12 @@ import { MainNav } from "@/components/main-nav"
 
 export function DashboardSidebar({ userRole }: { userRole: string }) {
   return (
-    <div className="border-r bg-muted/40 w-64 lg:w-72">
-      <div className="flex h-full max-h-screen flex-col gap-2 p-4">
+    <aside className="w-64 border-r bg-background">
+      <div className="p-4">
+        <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">Navigation</h2>
         <MainNav userRole={userRole} />
       </div>
-    </div>
+    </aside>
   )
 }
 

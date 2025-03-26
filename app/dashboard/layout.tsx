@@ -2,14 +2,8 @@ import type React from "react"
 import { redirect } from "next/navigation"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
-import { Inter } from "next/font/google"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import "../globals.css"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "Dashboard - Iris CRM",
@@ -43,20 +37,13 @@ export default async function DashboardLayout({
   }
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <div className="flex min-h-screen flex-col">
-            <DashboardHeader user={user} />
-            <div className="flex flex-1 overflow-hidden">
-              <DashboardSidebar userRole={user.role} />
-              <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
-            </div>
-          </div>
-          <Toaster />
-        </ThemeProvider>
-      </body>
-    </html>
+    <div className="flex min-h-screen flex-col">
+      <DashboardHeader user={user} />
+      <div className="flex flex-1 overflow-hidden">
+        <DashboardSidebar userRole={user.role} />
+        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+      </div>
+    </div>
   )
 }
 

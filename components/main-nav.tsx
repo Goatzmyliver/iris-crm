@@ -58,7 +58,7 @@ export function MainNav({ userRole }: { userRole: string }) {
       title: "Installer Portal",
       href: "/installer",
       icon: <Wrench className="h-5 w-5" />,
-      roles: ["admin"],
+      roles: ["admin", "installer"],
     },
     {
       title: "Settings",

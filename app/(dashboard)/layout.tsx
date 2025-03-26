@@ -2,8 +2,19 @@ import type React from "react"
 import { redirect } from "next/navigation"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
-import { MainNav } from "@/components/main-nav"
-import { UserNav } from "@/components/user-nav"
+import { Inter } from "next/font/google"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
+import { DashboardHeader } from "@/components/dashboard-header"
+import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import "../globals.css"
+
+const inter = Inter({ subsets: ["latin"] })
+
+export const metadata = {
+  title: "Dashboard - Iris CRM",
+  description: "Job scheduling and management system",
+}
 
 export default async function DashboardLayout({
   children,
@@ -17,7 +28,7 @@ export default async function DashboardLayout({
   } = await supabase.auth.getSession()
 
   if (!session) {
-    redirect("/auth/login")
+    redirect("/login")
   }
 
   // Fetch user profile including role
@@ -28,28 +39,24 @@ export default async function DashboardLayout({
     email: session.user.email!,
     full_name: userProfile?.full_name,
     avatar_url: userProfile?.avatar_url,
-    role: userProfile?.role || "sales", // Default to sales if no role is set
+    role: userProfile?.role || "user",
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="flex h-16 items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center">
-            <h1 className="text-xl font-bold">Iris CRM</h1>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <div className="flex min-h-screen flex-col">
+            <DashboardHeader user={user} />
+            <div className="flex flex-1">
+              <DashboardSidebar userRole={user.role} />
+              <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+            </div>
           </div>
-          <UserNav user={user} />
-        </div>
-      </header>
-      <div className="flex flex-1">
-        <aside className="hidden w-64 border-r bg-background md:block">
-          <div className="flex h-full flex-col p-4">
-            <MainNav userRole={user.role} />
-          </div>
-        </aside>
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
-      </div>
-    </div>
+          <Toaster />
+        </ThemeProvider>
+      </body>
+    </html>
   )
 }
 

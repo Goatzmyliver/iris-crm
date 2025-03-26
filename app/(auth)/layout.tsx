@@ -2,17 +2,16 @@ import type React from "react"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import "./globals.css"
+import "../globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "Iris CRM",
-  description: "Job scheduling and management system",
-    generator: 'v0.dev'
+  title: "Authentication - Iris CRM",
+  description: "Authentication for Iris CRM",
 }
 
-export default function RootLayout({
+export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode
@@ -21,7 +20,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {children}
+          <div className="min-h-screen flex items-center justify-center">{children}</div>
           <Toaster />
         </ThemeProvider>
       </body>
@@ -29,6 +28,3 @@ export default function RootLayout({
   )
 }
 
-
-
-import './globals.css'

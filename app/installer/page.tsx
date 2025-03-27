@@ -19,7 +19,7 @@ export default async function InstallerPortalPage() {
   const { data: userProfile } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
 
   // If user is not an installer, redirect to dashboard
-  if (userProfile?.role !== "installer") {
+  if (userProfile?.role !== "installer" && userProfile?.role !== "admin") {
     redirect("/dashboard")
   }
 

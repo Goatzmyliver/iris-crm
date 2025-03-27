@@ -3,12 +3,12 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Calendar, Home, Settings, Users, Wrench } from "lucide-react"
+import { Home, Wrench } from "lucide-react"
 
 export function MainNav({ userRole }: { userRole: string }) {
   const pathname = usePathname()
 
-  // Simplified navigation items
+  // Simplified navigation with only working routes
   const navItems = [
     {
       title: "Dashboard",
@@ -16,24 +16,9 @@ export function MainNav({ userRole }: { userRole: string }) {
       icon: <Home className="h-5 w-5" />,
     },
     {
-      title: "Customers",
-      href: "/customers",
-      icon: <Users className="h-5 w-5" />,
-    },
-    {
-      title: "Jobs",
-      href: "/jobs",
-      icon: <Calendar className="h-5 w-5" />,
-    },
-    {
       title: "Installer Portal",
       href: "/installer",
       icon: <Wrench className="h-5 w-5" />,
-    },
-    {
-      title: "Settings",
-      href: "/settings",
-      icon: <Settings className="h-5 w-5" />,
     },
   ]
 

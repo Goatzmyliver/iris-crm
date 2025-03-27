@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Camera, X } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface JobCompletionFormProps {
   jobId: string
@@ -26,6 +27,7 @@ export function JobCompletionForm({ jobId, installerId, onComplete, onCancel }: 
   const [hoursWorked, setHoursWorked] = useState("")
   const [photos, setPhotos] = useState<File[]>([])
   const [photoUrls, setPhotoUrls] = useState<string[]>([])
+  const [readyForInvoicing, setReadyForInvoicing] = useState(true)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -79,6 +81,7 @@ export function JobCompletionForm({ jobId, installerId, onComplete, onCancel }: 
           hours_worked: Number.parseFloat(hoursWorked) || 0,
           completion_photos: photoFileNames,
           progress_percentage: 100,
+          ready_for_invoicing: readyForInvoicing,
         })
         .eq("id", jobId)
 
@@ -88,7 +91,7 @@ export function JobCompletionForm({ jobId, installerId, onComplete, onCancel }: 
       await supabase.from("job_updates").insert({
         job_id: jobId,
         update_type: "job_completed",
-        notes: `Job completed. Hours worked: ${hoursWorked}. Notes: ${notes}`,
+        notes: `Job completed. Hours worked: ${hoursWorked}. Notes: ${notes}. ${readyForInvoicing ? "Ready for invoicing." : ""}`,
         created_by: installerId,
       })
 
@@ -172,6 +175,15 @@ export function JobCompletionForm({ jobId, installerId, onComplete, onCancel }: 
             </Label>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="readyForInvoicing"
+          checked={readyForInvoicing}
+          onCheckedChange={(checked) => setReadyForInvoicing(!!checked)}
+        />
+        <Label htmlFor="readyForInvoicing">Mark as ready for invoicing</Label>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 pt-2">

@@ -8,19 +8,27 @@ import { Home, Wrench } from "lucide-react"
 export function MainNav({ userRole }: { userRole: string }) {
   const pathname = usePathname()
 
-  // Simplified navigation with only working routes
-  const navItems = [
+  // Base navigation items that all users can see
+  const baseNavItems = [
     {
       title: "Dashboard",
       href: "/dashboard",
       icon: <Home className="h-5 w-5" />,
     },
-    {
-      title: "Installer Portal",
-      href: "/installer",
-      icon: <Wrench className="h-5 w-5" />,
-    },
   ]
+
+  // Add installer portal link only for installers and admins
+  const navItems =
+    userRole === "installer" || userRole === "admin"
+      ? [
+          ...baseNavItems,
+          {
+            title: "Installer Portal",
+            href: "/installer",
+            icon: <Wrench className="h-5 w-5" />,
+          },
+        ]
+      : baseNavItems
 
   return (
     <nav className="space-y-1">

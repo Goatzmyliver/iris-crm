@@ -72,7 +72,8 @@ export function MainNav({ userRole }: { userRole: string }) {
           href={item.href}
           className={cn(
             "flex items-center rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-            pathname === item.href || pathname.startsWith(`${item.href}/`)
+            (item.href === "/dashboard" && pathname === "/dashboard") ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href))
               ? "bg-accent text-accent-foreground"
               : "text-muted-foreground",
           )}

@@ -52,6 +52,19 @@ export function InstallerCalendar({ installerId }: InstallerCalendarProps) {
     fetchJobs()
   }, [supabase, installerId, month])
 
+  // Fix the date handling in the calendar component
+  useEffect(() => {
+    // When month changes, make sure the selected date is within that month
+    const currentMonth = month.getMonth()
+    const currentYear = month.getFullYear()
+
+    // If the selected date is not in the current month view, update it
+    if (date.getMonth() !== currentMonth || date.getFullYear() !== currentYear) {
+      // Set date to the first day of the current month view
+      setDate(new Date(currentYear, currentMonth, 1))
+    }
+  }, [month])
+
   const previousMonth = () => {
     setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
   }

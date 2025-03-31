@@ -200,6 +200,26 @@ export function QuoteForm({ customers, quote }: QuoteFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Validate form data
+    if (!formData.customer_id) {
+      toast({
+        title: "Missing customer",
+        description: "Please select a customer for this quote",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (quoteItems.length === 0) {
+      toast({
+        title: "No items added",
+        description: "Please add at least one item to the quote",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {

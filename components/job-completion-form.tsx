@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,8 +29,20 @@ export function JobCompletionForm({ jobId, installerId, onComplete, onCancel }: 
   const [photoUrls, setPhotoUrls] = useState<string[]>([])
   const [readyForInvoicing, setReadyForInvoicing] = useState(true)
 
+  // Update the photo upload logic to handle errors better
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      // Limit to 5 photos max
+      const totalPhotos = photos.length + e.target.files.length
+      if (totalPhotos > 5) {
+        toast({
+          title: "Too many photos",
+          description: "You can upload a maximum of 5 photos",
+          variant: "destructive",
+        })
+        return
+      }
+
       const newPhotos = Array.from(e.target.files)
       setPhotos([...photos, ...newPhotos])
 
@@ -111,6 +123,14 @@ export function JobCompletionForm({ jobId, installerId, onComplete, onCancel }: 
       setIsLoading(false)
     }
   }
+
+  // Also update the cleanup in the component to revoke object URLs
+  useEffect(() => {
+    // Cleanup function to revoke object URLs when component unmounts
+    return () => {
+      photoUrls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [photoUrls])
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,4 +1,5 @@
 import { LoginForm } from "@/components/login-form"
+import Link from "next/link"
 
 export const metadata = {
   title: "Login - Iris CRM",
@@ -13,6 +14,14 @@ export default function LoginPage() {
         <p className="text-gray-500 dark:text-gray-400">Enter your credentials to access your account</p>
       </div>
       <LoginForm />
+      <div className="text-center text-sm">
+        <p>
+          Don't have an account?{" "}
+          <Link href="/signup" className="text-blue-600 hover:underline">
+            Sign up
+          </Link>
+        </p>
+      </div>
     </div>
   )
 }

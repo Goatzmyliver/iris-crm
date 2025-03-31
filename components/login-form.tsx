@@ -23,7 +23,7 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -37,15 +37,14 @@ export function LoginForm() {
         description: "You have been logged in successfully.",
       })
 
-      router.push("/dashboard")
-      router.refresh()
+      // Force a hard navigation to ensure the session is properly loaded
+      window.location.href = "/dashboard"
     } catch (error: any) {
       toast({
         title: "Login failed",
         description: error.message || "Failed to login. Please try again.",
         variant: "destructive",
       })
-    } finally {
       setIsLoading(false)
     }
   }

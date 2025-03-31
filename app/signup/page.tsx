@@ -8,16 +8,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
 
 export default function SignupPage() {
-  const router = useRouter()
   const supabase = createClientComponentClient()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("test@example.com")
   const [password, setPassword] = useState("password123")
   const [fullName, setFullName] = useState("Test User")
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,7 +53,12 @@ export default function SignupPage() {
         description: "Your account has been created successfully. You can now log in.",
       })
 
-      router.push("/login")
+      setSuccess(true)
+
+      // Wait a moment before redirecting
+      setTimeout(() => {
+        window.location.href = "/login"
+      }, 2000)
     } catch (error: any) {
       toast({
         title: "Error",
@@ -64,6 +68,22 @@ export default function SignupPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (success) {
+    return (
+      <div className="mx-auto max-w-md space-y-6 p-6">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-bold">Account Created!</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            Your account has been created successfully. Redirecting to login page...
+          </p>
+          <Button onClick={() => (window.location.href = "/login")} className="mt-4">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (

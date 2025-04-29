@@ -8,7 +8,13 @@ export const metadata = {
   description: "Edit an inventory item",
 }
 
-export default async function EditInventoryItemPage({ params }: { params: { id: string } }) {
+interface PageParams {
+  params: {
+    id: string
+  }
+}
+
+export default async function EditInventoryItemPage({ params }: PageParams) {
   const supabase = createServerComponentClient({ cookies })
 
   // Fetch the inventory item

@@ -1,49 +1,34 @@
 import type React from "react"
-import { redirect } from "next/navigation"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import { ProtectedRoute } from "@/components/protected-route"
 
 export const metadata = {
   title: "Dashboard - Iris CRM",
   description: "Job scheduling and management system",
 }
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createServerComponentClient({ cookies })
+  return (
+    <ProtectedRoute>
+      <DashboardClientLayout>{children}</DashboardClientLayout>
+    </ProtectedRoute>
+  )
+}
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  // Fetch user profile including role
-  const { data: userProfile } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
-
-  const user = {
-    id: session.user.id,
-    email: session.user.email!,
-    full_name: userProfile?.full_name,
-    avatar_url: userProfile?.avatar_url,
-    role: userProfile?.role || "user",
-  }
-
+// Client component to access auth context
+function DashboardClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <DashboardHeader user={user} />
+      <DashboardHeader />
       <div className="flex flex-1 overflow-hidden">
-        <DashboardSidebar userRole={user.role} />
+        <DashboardSidebar />
         <main className="flex-1 overflow-auto p-4 md:p-6 w-full">{children}</main>
       </div>
     </div>
   )
 }
-

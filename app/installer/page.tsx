@@ -1,47 +1,30 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
+"use client"
+
 import { InstallerHeader } from "@/components/installer-header"
 import { InstallerCalendar } from "@/components/installer-calendar"
+import { useAuth } from "@/lib/auth-provider"
 
-export default async function InstallerPortalPage() {
-  const supabase = createServerComponentClient({ cookies })
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    redirect("/login")
-  }
-
-  // Fetch user profile
-  const { data: userProfile } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
-
-  // If user is not an installer, redirect to dashboard
-  if (userProfile?.role !== "installer" && userProfile?.role !== "admin") {
-    redirect("/dashboard")
-  }
-
-  const user = {
-    id: session.user.id,
-    email: session.user.email!,
-    full_name: userProfile?.full_name,
-    avatar_url: userProfile?.avatar_url,
-  }
-
+export default function InstallerPortalPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <InstallerHeader user={user} />
+      <InstallerHeader />
       <main className="flex-1 overflow-auto p-2 sm:p-4 md:p-6">
         <div className="space-y-4 sm:space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">My Jobs</h2>
           </div>
-          <InstallerCalendar installerId={user.id} />
+          <InstallerCalendarWrapper />
         </div>
       </main>
     </div>
   )
 }
 
+// Client component to access auth context
+function InstallerCalendarWrapper() {
+  const { user } = useAuth()
+
+  if (!user) return null
+
+  return <InstallerCalendar installerId={user.id} />
+}

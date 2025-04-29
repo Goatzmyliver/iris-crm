@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,27 +13,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useMobile } from "@/hooks/use-mobile"
+import { useAuth } from "@/lib/auth-provider"
 
-interface InstallerHeaderProps {
-  user: {
-    id: string
-    email: string
-    full_name?: string
-    avatar_url?: string
-  }
-}
-
-export function InstallerHeader({ user }: InstallerHeaderProps) {
+export function InstallerHeader() {
+  const { user, signOut } = useAuth()
   const router = useRouter()
-  const supabase = createClientComponentClient()
   const [isLoading, setIsLoading] = useState(false)
   const isMobile = useMobile()
 
   const handleSignOut = async () => {
     setIsLoading(true)
-    await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
+    await signOut()
     setIsLoading(false)
   }
 
@@ -45,6 +34,8 @@ export function InstallerHeader({ user }: InstallerHeaderProps) {
       .join("")
       .toUpperCase()
   }
+
+  if (!user) return null
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
@@ -85,4 +76,3 @@ export function InstallerHeader({ user }: InstallerHeaderProps) {
     </header>
   )
 }
-

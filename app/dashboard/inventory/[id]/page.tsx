@@ -35,4 +35,3 @@ export default async function EditInventoryItemPage({ params }: { params: { id: 
     </div>
   )
 }
-

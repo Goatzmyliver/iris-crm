@@ -1,8 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,28 +13,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Menu } from "lucide-react"
 import { MainNav } from "@/components/main-nav"
+import { useAuth } from "@/lib/auth-provider"
 
-interface DashboardHeaderProps {
-  user: {
-    id: string
-    email: string
-    full_name?: string
-    avatar_url?: string
-    role: string
-  }
-}
-
-export function DashboardHeader({ user }: DashboardHeaderProps) {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
-  const [isLoading, setIsLoading] = useState(false)
+export function DashboardHeader() {
+  const { user, signOut } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSignOut = async () => {
     setIsLoading(true)
-    await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
+    await signOut()
     setIsLoading(false)
   }
 
@@ -47,6 +33,8 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
       .join("")
       .toUpperCase()
   }
+
+  if (!user) return null
 
   return (
     <>
@@ -80,7 +68,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">{user.full_name || "User"}</p>
                   <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  <p className="text-xs leading-none text-muted-foreground mt-1">Role: {user.role}</p>
+                  <p className="text-xs leading-none text-muted-foreground mt-1">Role: {user.role || "user"}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -98,7 +86,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           <div className="fixed inset-y-0 left-0 z-40 w-64 bg-background overflow-y-auto">
             <div className="p-4">
               <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">Navigation</h2>
-              <MainNav userRole={user.role} />
+              <MainNav userRole={user.role || "user"} />
             </div>
           </div>
         </div>
@@ -106,4 +94,3 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
     </>
   )
 }
-

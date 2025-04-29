@@ -217,4 +217,3 @@ export function JobCompletionForm({ jobId, installerId, onComplete, onCancel }: 
     </form>
   )
 }
-

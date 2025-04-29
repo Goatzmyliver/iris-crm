@@ -279,4 +279,3 @@ export function JobAcceptanceDialog({ job, installerId, open, onClose, onJobUpda
     </Dialog>
   )
 }
-

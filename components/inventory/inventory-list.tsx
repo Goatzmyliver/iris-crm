@@ -244,4 +244,3 @@ export function InventoryList({ initialCategories }: InventoryListProps) {
     </div>
   )
 }
-

@@ -13,10 +13,11 @@ import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/auth-provider"
 import { Loader2 } from "lucide-react"
 
-export default function LoginPage() {
-  const { signIn } = useAuth()
+export default function SignupPage() {
+  const { signUp, signIn } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
+  const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -26,27 +27,33 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await signIn(email, password)
+      // Create the account
+      const { error, user } = await signUp(email, password, fullName)
 
       if (error) {
         toast({
-          title: "Login failed",
-          description: error.message || "Invalid email or password",
+          title: "Signup failed",
+          description: error.message || "Failed to create account",
           variant: "destructive",
         })
         return
       }
 
       toast({
-        title: "Login successful",
-        description: "Welcome back!",
+        title: "Account created",
+        description: "Your account has been created successfully",
       })
 
-      // Redirect to dashboard
-      router.push("/dashboard")
+      // Automatically sign in the user
+      if (user) {
+        await signIn(email, password)
+        router.push("/dashboard")
+      } else {
+        router.push("/login")
+      }
     } catch (error: any) {
       toast({
-        title: "Login failed",
+        title: "Signup failed",
         description: error.message || "An unexpected error occurred",
         variant: "destructive",
       })
@@ -59,11 +66,22 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Login</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
+          <CardDescription>Enter your information to create an account</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                placeholder="John Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -77,9 +95,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -88,23 +104,25 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                minLength={6}
               />
+              <p className="text-xs text-muted-foreground">Password must be at least 6 characters long</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...
                 </>
               ) : (
-                "Login"
+                "Create account"
               )}
             </Button>
             <div className="text-center text-sm">
-              Don't have an account?{" "}
-              <Link href="/signup" className="text-primary underline underline-offset-4 hover:text-primary/90">
-                Sign up
+              Already have an account?{" "}
+              <Link href="/login" className="text-primary underline underline-offset-4 hover:text-primary/90">
+                Login
               </Link>
             </div>
           </CardFooter>

@@ -175,4 +175,3 @@ export function QuotePreview({ quote, companySettings }: QuotePreviewProps) {
     </div>
   )
 }
-

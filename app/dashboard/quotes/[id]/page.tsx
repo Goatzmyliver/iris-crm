@@ -42,4 +42,3 @@ export default async function EditQuotePage({ params }: { params: { id: string }
     </div>
   )
 }
-

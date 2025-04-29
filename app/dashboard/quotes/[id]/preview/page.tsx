@@ -40,4 +40,3 @@ export default async function QuotePreviewPage({ params }: { params: { id: strin
     </div>
   )
 }
-

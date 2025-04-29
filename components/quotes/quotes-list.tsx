@@ -303,4 +303,3 @@ export function QuotesList({ initialCustomers }: QuotesListProps) {
     </div>
   )
 }
-

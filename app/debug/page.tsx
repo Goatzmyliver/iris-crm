@@ -1,58 +1,29 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useAuth } from "@/lib/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
 export default function DebugPage() {
-  const supabase = createClientComponentClient()
-  const [session, setSession] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, profile, isLoading, signOut, refreshSession } = useAuth()
 
-  useEffect(() => {
-    async function loadSession() {
-      setLoading(true)
-
-      // Get current session
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      setSession(session)
-
-      // If we have a session, get the user profile
-      if (session?.user) {
-        const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
-
-        setProfile(data)
-      }
-
-      setLoading(false)
-    }
-
-    loadSession()
-  }, [supabase])
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    window.location.reload()
-  }
-
-  const goToDashboard = () => {
-    window.location.href = "/dashboard"
+  const handleRefresh = async () => {
+    await refreshSession()
   }
 
   return (
     <div className="container mx-auto py-10">
       <Card>
         <CardHeader>
-          <CardTitle>Session Debug Information</CardTitle>
+          <CardTitle>Authentication Debug Information</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p>Loading session information...</p>
-          ) : session ? (
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : user ? (
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-medium">Session Active</h3>
@@ -61,17 +32,7 @@ export default function DebugPage() {
 
               <div className="space-y-2">
                 <h3 className="font-medium">User Information:</h3>
-                <pre className="bg-muted p-4 rounded-md overflow-auto">
-                  {JSON.stringify(
-                    {
-                      id: session.user.id,
-                      email: session.user.email,
-                      created_at: session.user.created_at,
-                    },
-                    null,
-                    2,
-                  )}
-                </pre>
+                <pre className="bg-muted p-4 rounded-md overflow-auto">{JSON.stringify(user, null, 2)}</pre>
               </div>
 
               {profile && (
@@ -82,8 +43,11 @@ export default function DebugPage() {
               )}
 
               <div className="flex gap-4">
-                <Button onClick={goToDashboard}>Go to Dashboard</Button>
-                <Button variant="outline" onClick={handleSignOut}>
+                <Button onClick={() => (window.location.href = "/dashboard")}>Go to Dashboard</Button>
+                <Button variant="outline" onClick={handleRefresh}>
+                  Refresh Session
+                </Button>
+                <Button variant="destructive" onClick={signOut}>
                   Sign Out
                 </Button>
               </div>
@@ -103,4 +67,3 @@ export default function DebugPage() {
     </div>
   )
 }
-

@@ -258,4 +258,3 @@ export function InventoryItemForm({ categories, item }: InventoryItemFormProps) 
     </form>
   )
 }
-

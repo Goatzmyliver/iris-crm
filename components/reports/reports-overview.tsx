@@ -222,4 +222,3 @@ export function ReportsOverview({ jobStats, quoteStats }: ReportsOverviewProps) 
     </div>
   )
 }
-

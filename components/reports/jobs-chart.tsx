@@ -43,4 +43,3 @@ export function JobsChart({ jobStats }: JobsChartProps) {
     </ResponsiveContainer>
   )
 }
-

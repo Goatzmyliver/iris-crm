@@ -1,14 +1,15 @@
-import { JobForm } from "@/components/jobs/job-form"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
+import { JobUpdatesList } from "@/components/jobs/job-updates-list"
+import { JobUpdateForm } from "@/components/jobs/job-update-form"
 
 export const metadata = {
-  title: "Edit Job - Iris CRM",
-  description: "Edit job details",
+  title: "Job Updates - Iris CRM",
+  description: "View and add job updates",
 }
 
-export default async function EditJobPage(props: any) {
+export default async function JobUpdatesPage(props: any) {
   const id = props.params.id
   const supabase = createServerComponentClient({ cookies })
 
@@ -19,24 +20,25 @@ export default async function EditJobPage(props: any) {
     notFound()
   }
 
-  // Fetch customers for the dropdown
-  const { data: customers } = await supabase.from("customers").select("*").order("full_name", { ascending: true })
-
-  // Fetch installers (users with installer role)
-  const { data: installers } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("role", "installer")
-    .order("full_name", { ascending: true })
+  // Fetch job updates
+  const { data: updates } = await supabase
+    .from("job_updates")
+    .select("*, created_by:profiles(full_name)")
+    .eq("job_id", id)
+    .order("created_at", { ascending: false })
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Edit Job</h2>
-        <p className="text-muted-foreground">Update details for Job #{job.job_number}</p>
+        <h2 className="text-2xl font-bold tracking-tight">Job Updates</h2>
+        <p className="text-muted-foreground">
+          Updates for Job #{job.job_number} - {job.customer.full_name}
+        </p>
       </div>
 
-      <JobForm job={job} customers={customers || []} installers={installers || []} />
+      <JobUpdateForm jobId={id} />
+
+      <JobUpdatesList updates={updates || []} />
     </div>
   )
 }

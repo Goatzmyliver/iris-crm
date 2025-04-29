@@ -1,24 +1,44 @@
-"use client"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+import { notFound } from "next/navigation"
+import { JobUpdatesList } from "@/components/jobs/job-updates-list"
+import { JobUpdateForm } from "@/components/jobs/job-update-form"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-provider"
-import { Loader2 } from "lucide-react"
+export const metadata = {
+  title: "Job Updates - Iris CRM",
+  description: "View and add job updates",
+}
 
-export default function HomePage() {
-  const { user, isLoading } = useAuth()
-  const router = useRouter()
+export default async function JobUpdatesPage(props: any) {
+  const id = props.params.id
+  const supabase = createServerComponentClient({ cookies })
 
-  useEffect(() => {
-    if (!isLoading) {
-      // For debugging: always redirect to dashboard
-      router.push("/dashboard")
-    }
-  }, [isLoading, router])
+  // Fetch the job
+  const { data: job } = await supabase.from("jobs").select("*, customer:customers(*)").eq("id", id).single()
+
+  if (!job) {
+    notFound()
+  }
+
+  // Fetch job updates
+  const { data: updates } = await supabase
+    .from("job_updates")
+    .select("*, created_by:profiles(full_name)")
+    .eq("job_id", id)
+    .order("created_at", { ascending: false })
 
   return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Job Updates</h2>
+        <p className="text-muted-foreground">
+          Updates for Job #{job.job_number} - {job.customer.full_name}
+        </p>
+      </div>
+
+      <JobUpdateForm jobId={id} />
+
+      <JobUpdatesList updates={updates || []} />
     </div>
   )
 }

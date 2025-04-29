@@ -1,19 +1,25 @@
+import { InventoryItemForm } from "@/components/inventory/inventory-item-form"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
-import { InventoryList } from "@/components/inventory/inventory-list"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { Plus } from "lucide-react"
+import { notFound } from "next/navigation"
 
 export const metadata = {
-  title: "Inventory - Iris CRM",
-  description: "Manage your inventory items",
+  title: "Edit Inventory Item - Iris CRM",
+  description: "Edit an inventory item",
 }
 
-export default async function InventoryPage() {
+export default async function EditInventoryItemPage(props: any) {
+  const id = props.params.id
   const supabase = createServerComponentClient({ cookies })
 
-  // Fetch inventory categories for filtering
+  // Fetch the inventory item
+  const { data: item } = await supabase.from("inventory_items").select("*").eq("id", id).single()
+
+  if (!item) {
+    notFound()
+  }
+
+  // Fetch categories for the dropdown
   const { data: categories } = await supabase
     .from("inventory_categories")
     .select("*")
@@ -21,19 +27,12 @@ export default async function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Inventory</h2>
-          <p className="text-muted-foreground">Manage your inventory items and stock levels</p>
-        </div>
-        <Button asChild>
-          <Link href="/dashboard/inventory/new">
-            <Plus className="mr-2 h-4 w-4" /> Add Item
-          </Link>
-        </Button>
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Edit Inventory Item</h2>
+        <p className="text-muted-foreground">Update details for {item.name}</p>
       </div>
 
-      <InventoryList initialCategories={categories || []} />
+      <InventoryItemForm categories={categories || []} item={item} />
     </div>
   )
 }

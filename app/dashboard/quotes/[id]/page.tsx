@@ -12,15 +12,8 @@ export default async function EditQuotePage(props: any) {
   const id = props.params.id
   const supabase = createServerComponentClient({ cookies })
 
-  // Fetch the quote with its line items
-  const { data: quote } = await supabase
-    .from("quotes")
-    .select(`
-      *,
-      quote_items (*)
-    `)
-    .eq("id", id)
-    .single()
+  // Fetch the quote
+  const { data: quote } = await supabase.from("quotes").select("*, customer:customers(*)").eq("id", id).single()
 
   if (!quote) {
     notFound()
@@ -29,9 +22,6 @@ export default async function EditQuotePage(props: any) {
   // Fetch customers for the dropdown
   const { data: customers } = await supabase.from("customers").select("*").order("full_name", { ascending: true })
 
-  // Fetch inventory items for the dropdown
-  const { data: inventoryItems } = await supabase.from("inventory_items").select("*").order("name", { ascending: true })
-
   return (
     <div className="space-y-6">
       <div>
@@ -39,7 +29,7 @@ export default async function EditQuotePage(props: any) {
         <p className="text-muted-foreground">Update details for Quote #{quote.quote_number}</p>
       </div>
 
-      <QuoteForm quote={quote} customers={customers || []} inventoryItems={inventoryItems || []} />
+      <QuoteForm quote={quote} customers={customers || []} />
     </div>
   )
 }

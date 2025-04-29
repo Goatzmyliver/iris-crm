@@ -8,8 +8,8 @@ export const metadata = {
   description: "Edit job details",
 }
 
-export default async function EditJobPage({ params }: { params: { id: string } }) {
-  const { id } = params
+export default async function EditJobPage(props: any) {
+  const id = props.params.id
   const supabase = createServerComponentClient({ cookies })
 
   // Fetch the job

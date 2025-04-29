@@ -8,14 +8,8 @@ export const metadata = {
   description: "Edit an inventory item",
 }
 
-type Props = {
-  params: {
-    id: string
-  }
-}
-
-export default async function EditInventoryItemPage(props: Props) {
-  const { id } = props.params
+export default async function EditInventoryItemPage(props: any) {
+  const id = props.params.id
   const supabase = createServerComponentClient({ cookies })
 
   // Fetch the inventory item

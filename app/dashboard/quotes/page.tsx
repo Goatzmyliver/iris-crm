@@ -1,44 +1,39 @@
-import { QuoteForm } from "@/components/quotes/quote-form"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
-import { notFound } from "next/navigation"
+import { QuotesList } from "@/components/quotes/quotes-list"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { Plus } from "lucide-react"
 
 export const metadata = {
-  title: "Edit Quote - Iris CRM",
-  description: "Edit an existing quote",
+  title: "Quotes - Iris CRM",
+  description: "Manage your quotes",
 }
 
-export default async function EditQuotePage({ params }: { params: { id: string } }) {
+export default async function QuotesPage() {
   const supabase = createServerComponentClient({ cookies })
 
-  // Fetch the quote with its line items
-  const { data: quote } = await supabase
-    .from("quotes")
-    .select(`
-      *,
-      quote_items (*)
-    `)
-    .eq("id", params.id)
-    .single()
-
-  if (!quote) {
-    notFound()
-  }
-
-  // Fetch customers for the dropdown
+  // Fetch customers for filtering
   const { data: customers } = await supabase
     .from("customers")
-    .select("id, full_name, email, phone, address")
+    .select("id, full_name")
     .order("full_name", { ascending: true })
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Edit Quote</h2>
-        <p className="text-muted-foreground">Update quote #{quote.quote_number}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Quotes</h2>
+          <p className="text-muted-foreground">Create and manage quotes for your customers</p>
+        </div>
+        <Button asChild>
+          <Link href="/dashboard/quotes/new">
+            <Plus className="mr-2 h-4 w-4" /> New Quote
+          </Link>
+        </Button>
       </div>
 
-      <QuoteForm customers={customers || []} quote={quote} />
+      <QuotesList initialCustomers={customers || []} />
     </div>
   )
 }

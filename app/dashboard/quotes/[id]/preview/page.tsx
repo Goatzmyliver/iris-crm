@@ -8,7 +8,8 @@ export const metadata = {
   description: "Preview quote for customer",
 }
 
-export default async function QuotePreviewPage({ params }: { params: { id: string } }) {
+export default async function QuotePreviewPage(props: any) {
+  const id = props.params.id
   const supabase = createServerComponentClient({ cookies })
 
   // Fetch the quote with its line items and customer
@@ -19,7 +20,7 @@ export default async function QuotePreviewPage({ params }: { params: { id: strin
       quote_items (*),
       customers (*)
     `)
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (!quote) {

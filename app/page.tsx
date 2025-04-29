@@ -1,24 +1,45 @@
-"use client"
+import { QuoteForm } from "@/components/quotes/quote-form"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
+import { notFound } from "next/navigation"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/lib/auth-provider"
-import { Loader2 } from "lucide-react"
+export const metadata = {
+  title: "Edit Quote - Iris CRM",
+  description: "Edit quote details",
+}
 
-export default function HomePage() {
-  const { user, isLoading } = useAuth()
-  const router = useRouter()
+export default async function EditQuotePage(props: any) {
+  const id = props.params.id
+  const supabase = createServerComponentClient({ cookies })
 
-  useEffect(() => {
-    if (!isLoading) {
-      // For debugging: always redirect to dashboard
-      router.push("/dashboard")
-    }
-  }, [isLoading, router])
+  // Fetch the quote with its line items
+  const { data: quote } = await supabase
+    .from("quotes")
+    .select(`
+      *,
+      quote_items (*)
+    `)
+    .eq("id", id)
+    .single()
+
+  if (!quote) {
+    notFound()
+  }
+
+  // Fetch customers for the dropdown
+  const { data: customers } = await supabase.from("customers").select("*").order("full_name", { ascending: true })
+
+  // Fetch inventory items for the dropdown
+  const { data: inventoryItems } = await supabase.from("inventory_items").select("*").order("name", { ascending: true })
 
   return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Edit Quote</h2>
+        <p className="text-muted-foreground">Update details for Quote #{quote.quote_number}</p>
+      </div>
+
+      <QuoteForm quote={quote} customers={customers || []} inventoryItems={inventoryItems || []} />
     </div>
   )
 }

@@ -8,14 +8,8 @@ export const metadata = {
   description: "Edit quote details",
 }
 
-type Props = {
-  params: {
-    id: string
-  }
-}
-
-export default async function EditQuotePage(props: Props) {
-  const { id } = props.params
+export default async function EditQuotePage({ params }: { params: { id: string } }) {
+  const { id } = params
   const supabase = createServerComponentClient({ cookies })
 
   // Fetch the quote

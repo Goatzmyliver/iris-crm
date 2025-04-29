@@ -8,14 +8,8 @@ export const metadata = {
   description: "Edit customer details",
 }
 
-type Props = {
-  params: {
-    id: string
-  }
-}
-
-export default async function EditCustomerPage(props: Props) {
-  const { id } = props.params
+export default async function EditCustomerPage({ params }: { params: { id: string } }) {
+  const { id } = params
   const supabase = createServerComponentClient({ cookies })
 
   // Fetch the customer

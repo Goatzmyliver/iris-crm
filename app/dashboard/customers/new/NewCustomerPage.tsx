@@ -1,13 +1,12 @@
 "use client"
 
-import { createCustomer } from "@/lib/customers"
 import { CustomerForm } from "@/components/customers/customer-form"
 import type { CustomerFormValues } from "@/types/schema"
+import { handleCreateCustomer } from "../actions"
 
 export default function NewCustomerPage() {
-  async function handleCreateCustomer(data: CustomerFormValues) {
-    "use server"
-    await createCustomer(data)
+  async function onSubmit(data: CustomerFormValues) {
+    await handleCreateCustomer(data)
   }
 
   return (
@@ -17,7 +16,7 @@ export default function NewCustomerPage() {
         <p className="text-muted-foreground">Create a new customer record</p>
       </div>
       <div className="rounded-md border p-6">
-        <CustomerForm onSubmit={handleCreateCustomer} />
+        <CustomerForm onSubmit={onSubmit} />
       </div>
     </div>
   )

@@ -1,9 +1,10 @@
 "use client"
 
 import { notFound } from "next/navigation"
-import { getCustomer, updateCustomer } from "@/lib/customers"
+import { getCustomer } from "@/lib/customers"
 import { CustomerForm } from "@/components/customers/customer-form"
 import type { CustomerFormValues } from "@/types/schema"
+import { handleUpdateCustomer } from "../../actions"
 
 interface EditCustomerPageProps {
   params: {
@@ -15,9 +16,8 @@ export default async function EditCustomerPage({ params }: EditCustomerPageProps
   try {
     const customer = await getCustomer(params.id)
 
-    async function handleUpdateCustomer(data: CustomerFormValues) {
-      "use server"
-      await updateCustomer(params.id, data)
+    async function onSubmit(data: CustomerFormValues) {
+      await handleUpdateCustomer(params.id, data)
     }
 
     return (
@@ -27,7 +27,7 @@ export default async function EditCustomerPage({ params }: EditCustomerPageProps
           <p className="text-muted-foreground">Update customer information</p>
         </div>
         <div className="rounded-md border p-6">
-          <CustomerForm customer={customer} onSubmit={handleUpdateCustomer} />
+          <CustomerForm customer={customer} onSubmit={onSubmit} />
         </div>
       </div>
     )

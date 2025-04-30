@@ -46,14 +46,16 @@ export async function PUT(request: Request, { params }: RouteParams) {
 export async function DELETE(request: Request, { params }: RouteParams) {
   try {
     const supabase = createServerSupabaseClient()
-    
-    const { error } = await supabase
-      .from("customers")
-      .delete()
-      .eq("id", params.id)
-    
+
+    const { error } = await supabase.from("customers").delete().eq("id", params.id)
+
     if (error) {
       throw error
     }
-    
+
     return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error deleting customer:", error)
+    return NextResponse.json({ error: "Failed to delete customer" }, { status: 500 })
+  }
+}

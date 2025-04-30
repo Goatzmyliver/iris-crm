@@ -1,14 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
-// The correct type for Next.js 15 route handlers
-type RouteContext = {
-  params: {
-    id: string
-  }
-}
-
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerSupabaseClient()
 
@@ -25,7 +18,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteContext) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerSupabaseClient()
 
@@ -44,7 +37,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerSupabaseClient()
 

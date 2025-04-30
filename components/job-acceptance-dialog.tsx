@@ -11,11 +11,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
+import { Textarea } from "@/components/ui/textarea"
 import { format } from "date-fns"
-import { Clock, MapPin, Phone, User, FileText, CheckCircle, XCircle } from "lucide-react"
-// Import the JobCompletionForm component
-import { JobCompletionForm } from "@/components/job-completion-form"
+import { AlertCircle, Calendar, Clock, MapPin, Phone, User } from "lucide-react"
+import { toast } from "sonner"
 
 interface JobAcceptanceDialogProps {
   job: any
@@ -27,254 +26,169 @@ interface JobAcceptanceDialogProps {
 
 export function JobAcceptanceDialog({ job, installerId, open, onClose, onJobUpdated }: JobAcceptanceDialogProps) {
   const supabase = createClientComponentClient()
-  const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
-  // Add a state for showing the completion form
-  const [showCompletionForm, setShowCompletionForm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [notes, setNotes] = useState("")
 
   const handleAcceptJob = async () => {
-    setIsLoading(true)
+    setLoading(true)
     try {
-      // Update the job with acceptance status
       const { error } = await supabase
         .from("jobs")
         .update({
           acceptance_status: "accepted",
-          acceptance_date: new Date().toISOString(),
+          installer_notes: notes,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", job.id)
 
       if (error) throw error
 
-      // Create a job update record
+      // Add a job update entry
       await supabase.from("job_updates").insert({
         job_id: job.id,
-        update_type: "job_accepted",
-        notes: "Job accepted by installer",
+        update_text: `Job accepted by installer${notes ? `: "${notes}"` : ""}`,
+        status: "accepted",
         created_by: installerId,
       })
 
-      toast({
-        title: "Job accepted",
-        description: "You have successfully accepted this job.",
-      })
-
+      toast.success("Job accepted successfully")
       onJobUpdated()
       onClose()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to accept job",
-        variant: "destructive",
-      })
+    } catch (error) {
+      console.error("Error accepting job:", error)
+      toast.error("Failed to accept job")
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   const handleRejectJob = async () => {
-    setIsLoading(true)
+    if (!notes) {
+      toast.error("Please provide a reason for rejecting this job")
+      return
+    }
+
+    setLoading(true)
     try {
-      // Update the job with rejection status
       const { error } = await supabase
         .from("jobs")
         .update({
           acceptance_status: "rejected",
-          acceptance_date: new Date().toISOString(),
+          installer_notes: notes,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", job.id)
 
       if (error) throw error
 
-      // Create a job update record
+      // Add a job update entry
       await supabase.from("job_updates").insert({
         job_id: job.id,
-        update_type: "job_rejected",
-        notes: "Job rejected by installer",
+        update_text: `Job rejected by installer: "${notes}"`,
+        status: "rejected",
         created_by: installerId,
       })
 
-      toast({
-        title: "Job rejected",
-        description: "You have rejected this job.",
-      })
-
+      toast.success("Job rejected successfully")
       onJobUpdated()
       onClose()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to reject job",
-        variant: "destructive",
-      })
+    } catch (error) {
+      console.error("Error rejecting job:", error)
+      toast.error("Failed to reject job")
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const handleStartJob = async () => {
-    setIsLoading(true)
-    try {
-      // Update the job status to in_progress
-      const { error } = await supabase
-        .from("jobs")
-        .update({
-          status: "in_progress",
-          progress_percentage: 10,
-        })
-        .eq("id", job.id)
+  if (!job) return null
 
-      if (error) throw error
+  const isJobAccepted = job.acceptance_status === "accepted"
+  const isJobRejected = job.acceptance_status === "rejected"
+  const needsAction = !isJobAccepted && !isJobRejected
 
-      toast({
-        title: "Job started",
-        description: "You have marked this job as in progress.",
-      })
-
-      onJobUpdated()
-      onClose()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to start job",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Add a function to handle job completion
-  const handleCompleteJob = () => {
-    setShowCompletionForm(true)
-  }
-
-  // Update the canStart condition and add a canComplete condition
-  const needsAcceptance = !job.acceptance_status || job.acceptance_status === "pending"
-  const isAccepted = job.acceptance_status === "accepted"
-  const canStart = isAccepted && job.status === "scheduled"
-  const canComplete = isAccepted && job.status === "in_progress"
-
-  // Update the return statement to include the completion form
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        {!showCompletionForm ? (
-          <>
-            <DialogHeader>
-              <DialogTitle>Job Details</DialogTitle>
-              <DialogDescription>
-                {format(new Date(job.scheduled_date), "EEEE, MMMM d, yyyy 'at' h:mm a")}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Customer</h3>
-                <div className="flex items-center text-sm">
-                  <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                  {job.customers?.full_name || "Unknown Customer"}
-                </div>
-                {job.customers?.phone && (
-                  <div className="flex items-center text-sm">
-                    <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {job.customers.phone}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="font-semibold">Location</h3>
-                <div className="flex items-start text-sm">
-                  <MapPin className="mr-2 h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <span>{job.customers?.address || "No address provided"}</span>
-                </div>
-              </div>
-
-              {job.notes && (
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Notes</h3>
-                  <div className="flex items-start text-sm">
-                    <FileText className="mr-2 h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                    <span className="whitespace-pre-line">{job.notes}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="rounded-md bg-muted p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Status</span>
-                  <span className="capitalize">{job.status.replace("_", " ")}</span>
-                </div>
-                {isAccepted ? (
-                  <div className="mt-2 flex items-center text-sm text-green-600">
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    You have accepted this job
-                  </div>
-                ) : job.acceptance_status === "rejected" ? (
-                  <div className="mt-2 flex items-center text-sm text-red-600">
-                    <XCircle className="mr-2 h-4 w-4" />
-                    You have rejected this job
-                  </div>
-                ) : (
-                  <div className="mt-2 flex items-center text-sm text-yellow-600">
-                    <Clock className="mr-2 h-4 w-4" />
-                    This job needs your confirmation
-                  </div>
-                )}
-              </div>
+        <DialogHeader>
+          <DialogTitle>Job Details</DialogTitle>
+          <DialogDescription>
+            {needsAction
+              ? "Please confirm if you can complete this job."
+              : isJobAccepted
+                ? "You have accepted this job."
+                : "You have rejected this job."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <User className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">{job.customers?.full_name || "Unknown Customer"}</span>
             </div>
+            <div className="flex items-center">
+              <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>{format(new Date(job.scheduled_date), "EEEE, MMMM d, yyyy")}</span>
+            </div>
+            <div className="flex items-center">
+              <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+              <span>{format(new Date(job.scheduled_date), "h:mm a")}</span>
+            </div>
+            {job.customers?.address && (
+              <div className="flex items-start">
+                <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                <span>{job.customers.address}</span>
+              </div>
+            )}
+            {job.customers?.phone && (
+              <div className="flex items-center">
+                <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
+                <span>{job.customers.phone}</span>
+              </div>
+            )}
+          </div>
 
-            <DialogFooter className="flex flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={onClose} className="sm:w-auto w-full">
-                Close
+          <div className="space-y-2">
+            <h4 className="font-medium">Job Description</h4>
+            <p className="text-sm text-muted-foreground">{job.description || "No description provided."}</p>
+          </div>
+
+          {(isJobAccepted || isJobRejected) && job.installer_notes && (
+            <div className="space-y-2">
+              <h4 className="font-medium">Your Notes</h4>
+              <p className="text-sm text-muted-foreground">{job.installer_notes}</p>
+            </div>
+          )}
+
+          {needsAction && (
+            <div className="space-y-2">
+              <div className="flex items-start">
+                <AlertCircle className="mr-2 h-4 w-4 text-amber-500" />
+                <span className="text-sm">This job requires your confirmation.</span>
+              </div>
+              <Textarea
+                placeholder="Add notes about this job (required for rejection)"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="h-24"
+              />
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex sm:justify-between">
+          {needsAction ? (
+            <>
+              <Button variant="destructive" onClick={handleRejectJob} disabled={loading}>
+                {loading ? "Rejecting..." : "Reject Job"}
               </Button>
-              {needsAcceptance && (
-                <>
-                  <Button
-                    variant="destructive"
-                    onClick={handleRejectJob}
-                    disabled={isLoading}
-                    className="sm:w-auto w-full"
-                  >
-                    {isLoading ? "Processing..." : "Reject Job"}
-                  </Button>
-                  <Button onClick={handleAcceptJob} disabled={isLoading} className="sm:w-auto w-full">
-                    {isLoading ? "Processing..." : "Accept Job"}
-                  </Button>
-                </>
-              )}
-              {canStart && (
-                <Button onClick={handleStartJob} disabled={isLoading} className="sm:w-auto w-full">
-                  {isLoading ? "Processing..." : "Start Job"}
-                </Button>
-              )}
-              {canComplete && (
-                <Button onClick={handleCompleteJob} disabled={isLoading} className="sm:w-auto w-full">
-                  {isLoading ? "Processing..." : "Complete Job"}
-                </Button>
-              )}
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>Complete Job</DialogTitle>
-              <DialogDescription>Please provide details about the completed job</DialogDescription>
-            </DialogHeader>
-
-            <JobCompletionForm
-              jobId={job.id}
-              installerId={installerId}
-              onComplete={() => {
-                setShowCompletionForm(false)
-                onJobUpdated()
-                onClose()
-              }}
-              onCancel={() => setShowCompletionForm(false)}
-            />
-          </>
-        )}
+              <Button onClick={handleAcceptJob} disabled={loading}>
+                {loading ? "Accepting..." : "Accept Job"}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={onClose}>Close</Button>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

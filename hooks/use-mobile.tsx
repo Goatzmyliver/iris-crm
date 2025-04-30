@@ -4,8 +4,9 @@ import * as React from "react"
 
 const MOBILE_BREAKPOINT = 768
 
+// Export both names for backward compatibility
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  const [isMobile, setIsMobile] = React.useState<boolean>(false)
 
   React.useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
@@ -17,5 +18,8 @@ export function useIsMobile() {
     return () => mql.removeEventListener("change", onChange)
   }, [])
 
-  return !!isMobile
+  return isMobile
 }
+
+// Add this alias export to fix the import error
+export const useMobile = useIsMobile

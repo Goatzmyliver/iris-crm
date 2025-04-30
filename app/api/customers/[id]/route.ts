@@ -1,13 +1,8 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
-interface RouteParams {
-  params: {
-    id: string
-  }
-}
-
-export async function GET(request: Request, { params }: RouteParams) {
+// Fix the route params type to match Next.js expectations
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerSupabaseClient()
 
@@ -24,7 +19,7 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function PUT(request: Request, { params }: RouteParams) {
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerSupabaseClient()
 
@@ -43,7 +38,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerSupabaseClient()
 

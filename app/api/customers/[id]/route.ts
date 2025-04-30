@@ -1,12 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
-// The correct type for route parameters in Next.js 15
-export async function GET(request: NextRequest, context: { params: { id: string } }) {
+// The correct type for Next.js 15 route handlers
+type RouteContext = {
+  params: {
+    id: string
+  }
+}
+
+export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     const supabase = createServerSupabaseClient()
 
-    const { data, error } = await supabase.from("customers").select("*").eq("id", context.params.id).single()
+    const { data, error } = await supabase.from("customers").select("*").eq("id", params.id).single()
 
     if (error) {
       throw error
@@ -19,13 +25,13 @@ export async function GET(request: NextRequest, context: { params: { id: string 
   }
 }
 
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: RouteContext) {
   try {
     const supabase = createServerSupabaseClient()
 
     const customer = await request.json()
 
-    const { data, error } = await supabase.from("customers").update(customer).eq("id", context.params.id).select()
+    const { data, error } = await supabase.from("customers").update(customer).eq("id", params.id).select()
 
     if (error) {
       throw error
@@ -38,11 +44,11 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
     const supabase = createServerSupabaseClient()
 
-    const { error } = await supabase.from("customers").delete().eq("id", context.params.id)
+    const { error } = await supabase.from("customers").delete().eq("id", params.id)
 
     if (error) {
       throw error

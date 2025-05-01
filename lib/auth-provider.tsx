@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 type User = {
   id: string
@@ -34,11 +35,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch user profile from the database
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle() // Use maybeSingle instead of single to handle no results gracefully
 
       if (error) {
         console.error("Error fetching profile:", error)
         return null
+      }
+
+      // If no profile exists, create one
+      if (!data) {
+        // Get user details from auth
+        const { data: userData } = await supabase.auth.getUser()
+
+        if (userData?.user) {
+          const newProfile = {
+            id: userId,
+            full_name: userData.user.user_metadata?.full_name || "User",
+            email: userData.user.email,
+            role: "user", // Default role
+          }
+
+          // Insert the new profile
+          const { data: createdProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert(newProfile)
+            .select()
+            .single()
+
+          if (createError) {
+            console.error("Error creating profile:", createError)
+            return null
+          }
+
+          return createdProfile
+        }
       }
 
       return data
@@ -54,21 +84,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true)
 
       try {
-        // For debugging: automatically set a mock user without requiring login
-        const mockUser = {
-          id: "debug-user-id",
-          email: "debug@example.com",
-          full_name: "Debug User",
-          role: "admin",
-        }
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
 
-        setUser(mockUser)
-        setProfile({
-          id: mockUser.id,
-          full_name: mockUser.full_name,
-          email: mockUser.email,
-          role: mockUser.role,
-        })
+        if (session?.user) {
+          const profile = await fetchProfile(session.user.id)
+
+          setUser({
+            id: session.user.id,
+            email: session.user.email || "",
+            full_name: profile?.full_name,
+            avatar_url: profile?.avatar_url,
+            role: profile?.role,
+          })
+
+          setProfile(profile)
+        }
       } catch (error) {
         console.error("Error initializing auth:", error)
       } finally {
@@ -116,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (error) {
+        toast.error(error.message)
         return { error }
       }
 
@@ -132,6 +165,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
 
         setProfile(profile)
+        toast.success("Signed in successfully")
+        router.push("/dashboard")
       }
 
       return { error: null }
@@ -156,6 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
 
       if (error) {
+        toast.error(error.message)
         return { error, user: null }
       }
 
@@ -169,8 +205,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })
 
         if (profileError) {
+          toast.error("Error creating profile")
           return { error: profileError, user: null }
         }
+
+        toast.success("Account created successfully")
+        router.push("/login")
       }
 
       return { error: null, user: data.user }
@@ -185,6 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    toast.success("Signed out successfully")
     router.push("/login")
   }
 

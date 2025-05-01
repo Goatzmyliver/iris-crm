@@ -1,33 +1,22 @@
 import type React from "react"
-import { DashboardHeader } from "@/components/dashboard-header"
+import { requireAuth } from "@/lib/auth"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { ProtectedRoute } from "@/components/protected-route"
+import { DashboardHeader } from "@/components/dashboard-header"
 
-export const metadata = {
-  title: "Dashboard - Iris CRM",
-  description: "Job scheduling and management system",
-}
-
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <ProtectedRoute>
-      <DashboardClientLayout>{children}</DashboardClientLayout>
-    </ProtectedRoute>
-  )
-}
+  // This will redirect to login if not authenticated
+  await requireAuth()
 
-// Client component to access auth context
-function DashboardClientLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
-      <div className="flex flex-1 overflow-hidden">
-        <DashboardSidebar />
-        <main className="flex-1 overflow-auto p-4 md:p-6 w-full">{children}</main>
+    <div className="flex h-screen overflow-hidden">
+      <DashboardSidebar />
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <DashboardHeader />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   )

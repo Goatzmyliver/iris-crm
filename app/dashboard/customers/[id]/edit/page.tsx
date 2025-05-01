@@ -1,8 +1,7 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { getCustomer } from "@/lib/customers"
-import { CustomerForm } from "@/components/customers/customer-form"
-import { handleUpdateCustomer } from "../../actions"
+import { CustomerFormWrapper } from "./customer-form-wrapper"
 
 // This is a Server Component
 export default async function EditCustomerPage({
@@ -32,32 +31,4 @@ export default async function EditCustomerPage({
       </div>
     </div>
   )
-}
-// This is a Client Component
-;("use client")
-
-import { useState } from "react"
-import type { CustomerFormValues } from "@/types/schema"
-
-function CustomerFormWrapper({
-  customerId,
-  customer,
-}: {
-  customerId: string
-  customer: any
-}) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  async function onSubmit(data: CustomerFormValues) {
-    setIsSubmitting(true)
-    try {
-      await handleUpdateCustomer(customerId, data)
-    } catch (error) {
-      console.error("Failed to update customer:", error)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  return <CustomerForm customer={customer} onSubmit={onSubmit} isSubmitting={isSubmitting} />
 }

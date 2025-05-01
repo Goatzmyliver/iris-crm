@@ -1,7 +1,8 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { createServerSupabaseClient } from "@/lib/supabase/server"
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+// Remove all custom types and use the exact pattern from Next.js docs
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerSupabaseClient()
 
@@ -18,7 +19,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerSupabaseClient()
 
@@ -37,7 +38,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = createServerSupabaseClient()
 

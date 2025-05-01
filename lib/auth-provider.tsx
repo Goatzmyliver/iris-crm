@@ -35,11 +35,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Fetch user profile from the database
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single()
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle() // Use maybeSingle instead of single to handle no results gracefully
 
       if (error) {
         console.error("Error fetching profile:", error)
         return null
+      }
+
+      // If no profile exists, create one
+      if (!data) {
+        // Get user details from auth
+        const { data: userData } = await supabase.auth.getUser()
+
+        if (userData?.user) {
+          const newProfile = {
+            id: userId,
+            full_name: userData.user.user_metadata?.full_name || "User",
+            email: userData.user.email,
+            role: "user", // Default role
+          }
+
+          // Insert the new profile
+          const { data: createdProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert(newProfile)
+            .select()
+            .single()
+
+          if (createError) {
+            console.error("Error creating profile:", createError)
+            return null
+          }
+
+          return createdProfile
+        }
       }
 
       return data

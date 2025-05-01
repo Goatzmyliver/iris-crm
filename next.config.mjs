@@ -8,7 +8,9 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ["localhost"],
   },
+  reactStrictMode: true,
 }
 
 export default nextConfig

@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 interface CustomerFormProps {
-  action: (formData: FormData) => Promise<{ error?: string }>
+  action: (formData: FormData) => Promise<any>
   customer?: {
     id: string
     name: string

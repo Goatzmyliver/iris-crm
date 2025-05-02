@@ -4,31 +4,28 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { supabase } from "@/lib/supabase/client"
+import { createClientClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2 } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
-export function SignupForm() {
+export function SignUpForm() {
   const router = useRouter()
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
     setIsLoading(true)
 
     try {
-      // Sign up the user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const supabase = createClientClient()
+
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -38,57 +35,59 @@ export function SignupForm() {
         },
       })
 
-      if (authError) {
-        throw authError
+      if (error) {
+        throw error
       }
 
-      if (authData.user) {
-        // Create a profile for the user
+      // Create profile record
+      if (data.user) {
         const { error: profileError } = await supabase.from("profiles").insert({
-          id: authData.user.id,
+          id: data.user.id,
           full_name: fullName,
-          email: email,
-          role: "user",
+          email,
         })
 
         if (profileError) {
           throw profileError
         }
-
-        router.push("/dashboard")
-        router.refresh()
       }
+
+      toast({
+        title: "Account created",
+        description: "Your account has been created successfully",
+      })
+
+      router.push("/dashboard")
+      router.refresh()
     } catch (error: any) {
-      setError(error.message || "Failed to sign up")
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create account",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle className="text-2xl">Create an account</CardTitle>
-        <CardDescription>Enter your information to create an account</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
+    <div className="grid gap-6">
+      <form onSubmit={handleSubmit}>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="full-name">Full Name</Label>
             <Input
-              id="fullName"
-              placeholder="John Doe"
+              id="full-name"
+              type="text"
+              placeholder="John Smith"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
+              autoComplete="name"
+              disabled={isLoading}
             />
           </div>
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -97,9 +96,11 @@ export function SignupForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
+              disabled={isLoading}
             />
           </div>
-          <div className="space-y-2">
+          <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -107,28 +108,15 @@ export function SignupForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="new-password"
+              disabled={isLoading}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
-              </>
-            ) : (
-              "Sign Up"
-            )}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Creating account..." : "Create Account"}
           </Button>
-        </form>
-      </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
-      </CardFooter>
-    </Card>
+        </div>
+      </form>
+    </div>
   )
 }

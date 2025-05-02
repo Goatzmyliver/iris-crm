@@ -1,222 +1,118 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
-import type { Customer, CustomerFormValues } from "@/types/schema"
-
-const customerSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string().min(10, { message: "Please enter a valid phone number." }),
-  address: z.string().min(5, { message: "Address must be at least 5 characters." }),
-  city: z.string().min(2, { message: "City must be at least 2 characters." }),
-  state: z.string().min(2, { message: "State must be at least 2 characters." }),
-  zip: z.string().min(5, { message: "ZIP code must be at least 5 characters." }),
-  notes: z.string().optional(),
-  status: z.enum(["active", "inactive", "lead"]),
-})
+import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 interface CustomerFormProps {
-  customer?: Customer
-  onSubmit: (data: CustomerFormValues) => Promise<void>
+  action: (formData: FormData) => Promise<{ error?: string }>
+  customer?: {
+    id: string
+    name: string
+    email: string
+    phone: string
+    address: string
+    city: string
+    state: string
+    zip: string
+    notes?: string
+  }
 }
 
-export function CustomerForm({ customer, onSubmit }: CustomerFormProps) {
+export function CustomerForm({ action, customer }: CustomerFormProps) {
   const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
 
-  const defaultValues: Partial<CustomerFormValues> = {
-    name: customer?.name || "",
-    email: customer?.email || "",
-    phone: customer?.phone || "",
-    address: customer?.address || "",
-    city: customer?.city || "",
-    state: customer?.state || "",
-    zip: customer?.zip || "",
-    notes: customer?.notes || "",
-    status: customer?.status || "active",
-  }
+  async function handleSubmit(formData: FormData) {
+    setIsLoading(true)
 
-  const form = useForm<CustomerFormValues>({
-    resolver: zodResolver(customerSchema),
-    defaultValues,
-  })
-
-  async function handleSubmit(data: CustomerFormValues) {
-    setIsSubmitting(true)
     try {
-      await onSubmit(data)
+      const result = await action(formData)
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
       toast({
         title: "Success",
         description: customer ? "Customer updated successfully" : "Customer created successfully",
       })
+
       router.push("/dashboard/customers")
       router.refresh()
-    } catch (error) {
-      console.error("Error submitting form:", error)
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: error.message || "Something went wrong",
         variant: "destructive",
       })
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Full Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John Smith" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
+    <form action={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="name">Full Name</Label>
+          <Input id="name" name="name" defaultValue={customer?.name} placeholder="John Smith" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
             name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="john@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone</FormLabel>
-                <FormControl>
-                  <Input placeholder="(555) 123-4567" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="lead">Lead</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Address</FormLabel>
-                <FormControl>
-                  <Input placeholder="123 Main St" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="city"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>City</FormLabel>
-                <FormControl>
-                  <Input placeholder="New York" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="state"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>State</FormLabel>
-                <FormControl>
-                  <Input placeholder="NY" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="zip"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ZIP Code</FormLabel>
-                <FormControl>
-                  <Input placeholder="10001" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            type="email"
+            defaultValue={customer?.email}
+            placeholder="john@example.com"
+            required
           />
         </div>
-        <FormField
-          control={form.control}
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone</Label>
+          <Input id="phone" name="phone" defaultValue={customer?.phone} placeholder="(555) 123-4567" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="address">Address</Label>
+          <Input id="address" name="address" defaultValue={customer?.address} placeholder="123 Main St" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="city">City</Label>
+          <Input id="city" name="city" defaultValue={customer?.city} placeholder="New York" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="state">State</Label>
+          <Input id="state" name="state" defaultValue={customer?.state} placeholder="NY" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="zip">ZIP Code</Label>
+          <Input id="zip" name="zip" defaultValue={customer?.zip} placeholder="10001" required />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
           name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Additional information about the customer"
-                  className="min-h-[100px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          defaultValue={customer?.notes}
+          placeholder="Additional information about the customer"
+          className="min-h-[100px]"
         />
-        <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : customer ? "Update Customer" : "Create Customer"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+      </div>
+      <div className="flex justify-end space-x-4">
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Saving..." : customer ? "Update Customer" : "Create Customer"}
+        </Button>
+      </div>
+    </form>
   )
 }

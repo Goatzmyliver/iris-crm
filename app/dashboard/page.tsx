@@ -1,55 +1,43 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getUserProfile } from "@/lib/auth"
-import { createServerSupabaseClient } from "@/lib/supabase/server"
+import { createServerClient } from "@/lib/supabase/server"
 import { DollarSign, Users, Briefcase, Calendar } from "lucide-react"
 
 export default async function DashboardPage() {
-  const profile = await getUserProfile()
-  const supabase = createServerSupabaseClient()
+  const supabase = createServerClient()
+
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   // Fetch dashboard data
   const { data: customers } = await supabase
     .from("customers")
     .select("*")
-    .eq("user_id", profile?.id)
     .order("created_at", { ascending: false })
     .limit(5)
 
   const { data: jobs } = await supabase
     .from("jobs")
     .select("*, customers(name)")
-    .eq("user_id", profile?.id)
     .order("created_at", { ascending: false })
     .limit(5)
 
-  const { data: customerCount } = await supabase
-    .from("customers")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", profile?.id)
+  const { data: customerCount } = await supabase.from("customers").select("id", { count: "exact", head: true })
 
-  const { data: jobCount } = await supabase
-    .from("jobs")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", profile?.id)
-
-  const { data: totalRevenue } = await supabase
-    .from("jobs")
-    .select("total_amount")
-    .eq("user_id", profile?.id)
-    .eq("status", "completed")
+  const { data: jobCount } = await supabase.from("jobs").select("id", { count: "exact", head: true })
 
   const { data: upcomingJobs } = await supabase
     .from("jobs")
     .select("*, customers(name)")
-    .eq("user_id", profile?.id)
     .eq("status", "scheduled")
     .gte("scheduled_date", new Date().toISOString())
     .order("scheduled_date", { ascending: true })
     .limit(5)
 
-  // Calculate total revenue
-  const revenue = totalRevenue?.reduce((sum, job) => sum + (job.total_amount || 0), 0) || 0
+  // Get user profile
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id).single()
 
   return (
     <div className="flex flex-col gap-4">
@@ -65,7 +53,7 @@ export default async function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${revenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">$0.00</div>
             <p className="text-xs text-muted-foreground">From completed jobs</p>
           </CardContent>
         </Card>
@@ -125,10 +113,10 @@ export default async function DashboardPage() {
                         <span
                           className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                             job.status === "completed"
-                              ? "bg-green-100 text-green-800"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
                               : job.status === "in_progress"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-yellow-100 text-yellow-800"
+                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
                           }`}
                         >
                           {job.status === "in_progress"

@@ -1,45 +1,30 @@
-import { Suspense } from "react"
-import { getCustomers } from "@/lib/customers"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 import { CustomerList } from "@/components/customers/customer-list"
-import { Skeleton } from "@/components/ui/skeleton"
+import { createServerClient } from "@/lib/supabase/server"
 
-export const metadata = {
-  title: "Customers | Iris CRM",
-  description: "Manage your customers",
-}
+export default async function CustomersPage() {
+  const supabase = createServerClient()
 
-function CustomerListSkeleton() {
+  const { data: customers } = await supabase.from("customers").select("*").order("created_at", { ascending: false })
+
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <Skeleton className="h-10 w-[300px]" />
-        <Skeleton className="h-10 w-[150px]" />
-      </div>
-      <div className="rounded-md border">
-        <div className="h-[400px] w-full">
-          <Skeleton className="h-full w-full" />
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
+          <p className="text-muted-foreground">Manage your customers and their information</p>
         </div>
+        <Link href="/dashboard/customers/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Customer
+          </Button>
+        </Link>
       </div>
-    </div>
-  )
-}
 
-async function CustomerListContainer() {
-  const customers = await getCustomers()
-
-  return <CustomerList customers={customers} />
-}
-
-export default function CustomersPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-        <p className="text-muted-foreground">Manage your customers and their information</p>
-      </div>
-      <Suspense fallback={<CustomerListSkeleton />}>
-        <CustomerListContainer />
-      </Suspense>
+      <CustomerList customers={customers || []} />
     </div>
   )
 }

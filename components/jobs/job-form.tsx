@@ -1,101 +1,60 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { format } from "date-fns"
 
 interface Customer {
   id: string
-  full_name: string
-}
-
-interface Installer {
-  id: string
-  full_name: string
-}
-
-interface Job {
-  id: string
-  job_number: string
-  customer_id: string
-  installer_id: string
-  scheduled_date: string
-  status: string
-  notes: string
+  name: string
 }
 
 interface JobFormProps {
-  job?: Job
+  action: (formData: FormData) => Promise<{ error?: string }>
   customers: Customer[]
-  installers: Installer[]
+  job?: {
+    id: string
+    title: string
+    description: string
+    customer_id: string
+    scheduled_date: string
+    status: string
+  }
 }
 
-export function JobForm({ job, customers, installers }: JobFormProps) {
+export function JobForm({ action, customers, job }: JobFormProps) {
   const router = useRouter()
-  const supabase = createClientComponentClient()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [customerId, setCustomerId] = useState(job?.customer_id || "")
+  const [status, setStatus] = useState(job?.status || "scheduled")
 
-  const [formData, setFormData] = useState({
-    customer_id: job?.customer_id || "",
-    installer_id: job?.installer_id || "",
-    scheduled_date: job?.scheduled_date || format(new Date(), "yyyy-MM-dd"),
-    status: job?.status || "scheduled",
-    notes: job?.notes || "",
-  })
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  async function handleSubmit(formData: FormData) {
     setIsLoading(true)
 
     try {
-      if (job) {
-        // Update existing job
-        const { error } = await supabase.from("jobs").update(formData).eq("id", job.id)
+      const result = await action(formData)
 
-        if (error) throw error
-
-        toast({
-          title: "Job updated",
-          description: "The job has been updated successfully",
-        })
-      } else {
-        // Create new job
-        const { error } = await supabase.from("jobs").insert(formData)
-
-        if (error) throw error
-
-        toast({
-          title: "Job created",
-          description: "The job has been created successfully",
-        })
+      if (result.error) {
+        throw new Error(result.error)
       }
+
+      toast({
+        title: "Success",
+        description: job ? "Job updated successfully" : "Job created successfully",
+      })
 
       router.push("/dashboard/jobs")
       router.refresh()
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to save job",
+        description: error.message || "Something went wrong",
         variant: "destructive",
       })
     } finally {
@@ -104,83 +63,71 @@ export function JobForm({ job, customers, installers }: JobFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="customer_id">Customer</Label>
-            <Select value={formData.customer_id} onValueChange={(value) => handleSelectChange("customer_id", value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a customer" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map((customer) => (
-                  <SelectItem key={customer.id} value={customer.id}>
-                    {customer.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="installer_id">Installer</Label>
-            <Select value={formData.installer_id} onValueChange={(value) => handleSelectChange("installer_id", value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select an installer" />
-              </SelectTrigger>
-              <SelectContent>
-                {installers.map((installer) => (
-                  <SelectItem key={installer.id} value={installer.id}>
-                    {installer.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="scheduled_date">Scheduled Date</Label>
-            <Input
-              id="scheduled_date"
-              name="scheduled_date"
-              type="date"
-              value={formData.scheduled_date}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} rows={3} />
-          </div>
-
-          <div className="flex justify-end space-x-4 pt-4">
-            <Button type="button" variant="outline" onClick={() => router.push("/dashboard/jobs")} disabled={isLoading}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : job ? "Update Job" : "Create Job"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <form action={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="title">Job Title</Label>
+          <Input id="title" name="title" defaultValue={job?.title} placeholder="Bathroom Renovation" required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="customer_id">Customer</Label>
+          <Select name="customer_id" value={customerId} onValueChange={setCustomerId} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a customer" />
+            </SelectTrigger>
+            <SelectContent>
+              {customers.map((customer) => (
+                <SelectItem key={customer.id} value={customer.id}>
+                  {customer.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="scheduled_date">Scheduled Date</Label>
+          <Input
+            id="scheduled_date"
+            name="scheduled_date"
+            type="date"
+            defaultValue={job?.scheduled_date || new Date().toISOString().split("T")[0]}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <Select name="status" value={status} onValueChange={setStatus} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          name="description"
+          defaultValue={job?.description}
+          placeholder="Details about the job"
+          className="min-h-[100px]"
+          required
+        />
+      </div>
+      <div className="flex justify-end space-x-4">
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Saving..." : job ? "Update Job" : "Create Job"}
+        </Button>
+      </div>
     </form>
   )
 }

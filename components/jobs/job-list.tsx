@@ -10,60 +10,92 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/use-toast"
 import { MoreHorizontal, Search } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
-interface Customer {
+interface Job {
   id: string
-  name: string
-  email: string
-  phone: string
-  address: string
-  city: string
-  state: string
-  zip: string
+  title: string
+  description: string
+  customer_id: string
+  scheduled_date: string
+  status: string
+  customers?: {
+    name: string
+  }
 }
 
-interface CustomerListProps {
-  customers: Customer[]
+interface JobListProps {
+  jobs: Job[]
 }
 
-export function CustomerList({ customers }: CustomerListProps) {
+export function JobList({ jobs }: JobListProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
 
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.phone.includes(searchQuery),
+  const filteredJobs = jobs.filter(
+    (job) =>
+      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.customers?.name.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this customer?")) {
+    if (!confirm("Are you sure you want to delete this job?")) {
       return
     }
 
     try {
       const supabase = createClientClient()
 
-      const { error } = await supabase.from("customers").delete().eq("id", id)
+      const { error } = await supabase.from("jobs").delete().eq("id", id)
 
       if (error) {
         throw error
       }
 
       toast({
-        title: "Customer deleted",
-        description: "The customer has been deleted successfully",
+        title: "Job deleted",
+        description: "The job has been deleted successfully",
       })
 
       router.refresh()
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to delete customer",
+        description: error.message || "Failed to delete job",
         variant: "destructive",
       })
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "scheduled":
+        return (
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+            Scheduled
+          </Badge>
+        )
+      case "in_progress":
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+            In Progress
+          </Badge>
+        )
+      case "completed":
+        return (
+          <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+            Completed
+          </Badge>
+        )
+      case "cancelled":
+        return (
+          <Badge variant="outline" className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+            Cancelled
+          </Badge>
+        )
+      default:
+        return <Badge variant="outline">{status}</Badge>
     }
   }
 
@@ -74,7 +106,7 @@ export function CustomerList({ customers }: CustomerListProps) {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search customers..."
+            placeholder="Search jobs..."
             className="pl-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -86,29 +118,27 @@ export function CustomerList({ customers }: CustomerListProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Address</TableHead>
+              <TableHead>Job Title</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Scheduled Date</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCustomers.length === 0 ? (
+            {filteredJobs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
-                  No customers found.
+                  No jobs found.
                 </TableCell>
               </TableRow>
             ) : (
-              filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.name}</TableCell>
-                  <TableCell>{customer.email}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
-                  <TableCell>
-                    {customer.address}, {customer.city}, {customer.state} {customer.zip}
-                  </TableCell>
+              filteredJobs.map((job) => (
+                <TableRow key={job.id}>
+                  <TableCell className="font-medium">{job.title}</TableCell>
+                  <TableCell>{job.customers?.name}</TableCell>
+                  <TableCell>{new Date(job.scheduled_date).toLocaleDateString()}</TableCell>
+                  <TableCell>{getStatusBadge(job.status)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -119,13 +149,13 @@ export function CustomerList({ customers }: CustomerListProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/customers/${customer.id}`}>View</Link>
+                          <Link href={`/dashboard/jobs/${job.id}`}>View</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/customers/${customer.id}/edit`}>Edit</Link>
+                          <Link href={`/dashboard/jobs/${job.id}/edit`}>Edit</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDelete(customer.id)}
+                          onClick={() => handleDelete(job.id)}
                           className="text-destructive focus:text-destructive"
                         >
                           Delete

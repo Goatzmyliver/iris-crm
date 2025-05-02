@@ -1,19 +1,16 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import { Toaster } from "sonner"
+import { Toaster } from "@/components/ui/toaster"
 
-import { AuthProvider } from "@/lib/auth-provider"
-import { NotificationService } from "@/components/notifications/notification-service"
 import { ThemeProvider } from "@/components/theme-provider"
-
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Iris CRM",
-  description: "Complete customer relationship management for service businesses",
+  description: "Customer relationship management for service businesses",
     generator: 'v0.dev'
 }
 
@@ -23,15 +20,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider>
-            <NotificationService>
-              {children}
-              <Toaster position="top-right" />
-            </NotificationService>
-          </AuthProvider>
+          {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
